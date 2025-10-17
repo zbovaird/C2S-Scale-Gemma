@@ -1,0 +1,59 @@
+# Vertex AI 27B Configuration
+# Optimized for Vertex AI with H100 GPUs
+
+[model.text]
+checkpoint = "google/gemma-2-27b"  # Fallback to base Gemma-2-27B
+load_4bit = true
+lora_r = 16
+lora_alpha = 16
+lora_dropout = 0.05
+gradient_checkpointing = true
+max_seq_len = 2048
+freeze_base = true
+
+[model.hgnn]
+encoder = "uhg_graphsage"
+hidden_dim = 384
+layers = 3
+dropout = 0.1
+uhg_norm = "projective"
+contrastive_tau = 0.07
+
+[fusion]
+projector = "monotone_radial"
+proj_out_dim = 4096
+align_loss = "infonce"
+align_weight = 1.0
+hard_negatives = true
+
+[data]
+cells = "gs://your-bucket/cells.h5ad"
+knn = "gs://your-bucket/graphs/knn.parquet"
+lr = "gs://your-bucket/graphs/lr.parquet"
+grn = "gs://your-bucket/graphs/grn.parquet"
+pairs = "gs://your-bucket/pairs/index.parquet"
+neighbors = 128
+
+[train]
+batch_size = 8
+epochs = 2
+optimizer = "adamw"
+lr = 1.5e-4
+weight_decay = 0.02
+precision = "bf16"
+accum_steps = 8
+warmup_steps = 200
+
+[eval]
+seeds = [13, 17, 23]
+tasks = ["cell_type", "tissue", "lr_link_pred", "ood_generalization", "counterfactual"]
+
+[logging]
+mlflow_tracking_uri = "https://your-mlflow-instance"
+experiment_name = "c2s-hybrid-vertex-27b"
+log_level = "INFO"
+
+[vertex]
+project_id = "your-gcp-project"
+region = "us-central1"
+service_account = "your-service-account@your-project.iam.gserviceaccount.com"

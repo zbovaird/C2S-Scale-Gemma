@@ -1,0 +1,54 @@
+# Colab 7B Configuration
+# Optimized for Google Colab with T4 GPU
+
+[model.text]
+checkpoint = "google/gemma-2-7b"  # Fallback to base Gemma-2-7B
+load_4bit = true
+lora_r = 16
+lora_alpha = 16
+lora_dropout = 0.05
+gradient_checkpointing = true
+max_seq_len = 2048
+freeze_base = true
+
+[model.hgnn]
+encoder = "uhg_graphsage"
+hidden_dim = 256
+layers = 3
+dropout = 0.1
+uhg_norm = "projective"
+contrastive_tau = 0.07
+
+[fusion]
+projector = "monotone_radial"
+proj_out_dim = 2048
+align_loss = "infonce"
+align_weight = 1.0
+hard_negatives = true
+
+[data]
+cells = "data/processed/cells.h5ad"
+knn = "data/processed/graphs/knn.parquet"
+lr = "data/processed/graphs/lr.parquet"
+grn = "data/processed/graphs/grn.parquet"
+pairs = "data/processed/pairs/index.parquet"
+neighbors = 96
+
+[train]
+batch_size = 8
+epochs = 3
+optimizer = "adamw"
+lr = 2e-4
+weight_decay = 0.01
+precision = "bf16"
+accum_steps = 4
+warmup_steps = 100
+
+[eval]
+seeds = [13, 17, 23]
+tasks = ["cell_type", "tissue", "lr_link_pred", "ood_generalization"]
+
+[logging]
+mlflow_tracking_uri = "file:./mlruns"
+experiment_name = "c2s-hybrid-colab-7b"
+log_level = "INFO"

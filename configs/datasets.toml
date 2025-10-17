@@ -1,0 +1,55 @@
+# Dataset Configuration
+# Parameters for data loading and graph construction
+
+[datasets]
+# Cell2Sentence dataset source
+source = "huggingface"  # or "github"
+dataset_name = "vandijklab/cell2sentence"  # HF dataset name
+github_repo = "https://github.com/vandijklab/cell2sentence"
+
+# Data paths
+raw_data_dir = "data/raw"
+processed_data_dir = "data/processed"
+cache_dir = "cache"
+
+# Graph construction parameters
+[knn_graph]
+k = 30
+metric = "cosine"
+use_embeddings = true
+embedding_method = "scanpy"  # or "scvi", "umap"
+
+[lr_graph]
+# Ligand-receptor interaction database
+lr_database = "cellchat"  # or "cellphonedb", "custom"
+min_score = 0.5
+confidence_threshold = 0.7
+
+[grn_graph]
+# Gene regulatory network
+grn_method = "scenic"  # or "grnboost", "custom"
+min_regulon_size = 10
+max_regulon_size = 1000
+auc_threshold = 0.01
+
+[preprocessing]
+# Cell filtering
+min_genes = 200
+min_cells = 3
+max_genes = 5000
+max_cells = 10000
+
+# Gene filtering
+min_mean_expression = 0.01
+min_cell_fraction = 0.01
+
+# Normalization
+normalize_method = "log1p"  # or "zscore", "quantile"
+target_sum = 10000
+
+[sampling]
+# Neighborhood sampling
+max_neighbors = 128
+min_neighbors = 32
+radial_bands = 5
+band_size = 20

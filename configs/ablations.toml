@@ -1,0 +1,52 @@
+# Ablation Study Configuration
+# Different experimental setups for ablation studies
+
+[baselines]
+# Baseline models to compare against
+text_only = true
+hgnn_only = true
+euclidean_gnn = true
+
+[ablation_studies]
+# Component ablations
+no_lora = false
+no_projector = false
+no_hard_negatives = false
+different_temperatures = [0.05, 0.07, 0.1, 0.15]
+
+# Architecture ablations
+different_lora_ranks = [4, 8, 16, 32]
+different_hidden_dims = [128, 256, 384, 512]
+different_layers = [2, 3, 4, 5]
+
+# Training ablations
+different_batch_sizes = [4, 8, 16, 32]
+different_learning_rates = [1e-4, 2e-4, 5e-4, 1e-3]
+different_epochs = [1, 2, 3, 5]
+
+[evaluation]
+# Evaluation settings
+cross_validation_folds = 5
+test_split = 0.2
+validation_split = 0.1
+random_seeds = [13, 17, 23, 42, 123]
+
+# OOD evaluation
+leave_one_tissue_out = true
+leave_one_cell_type_out = true
+perturbation_holdout = true
+
+[metrics]
+# Metrics to compute
+classification_metrics = ["accuracy", "f1_macro", "f1_weighted", "auroc"]
+regression_metrics = ["mse", "mae", "r2"]
+ranking_metrics = ["ndcg", "map", "recall_at_k"]
+generation_metrics = ["bleu", "rouge", "meteor"]
+
+[reporting]
+# Output settings
+save_predictions = true
+save_embeddings = true
+save_attention_weights = false
+plot_results = true
+export_artifacts = true
