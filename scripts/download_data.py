@@ -205,7 +205,13 @@ def main():
     
     # Load configuration
     if os.path.exists(args.cfg):
-        cfg = OmegaConf.load(args.cfg)
+        if args.cfg.endswith('.toml'):
+            import toml
+            with open(args.cfg, 'r') as f:
+                cfg_dict = toml.load(f)
+            cfg = OmegaConf.create(cfg_dict)
+        else:
+            cfg = OmegaConf.load(args.cfg)
         logger.info(f"Loaded configuration from {args.cfg}")
     else:
         logger.warning(f"Configuration file {args.cfg} not found, using defaults")

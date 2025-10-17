@@ -83,7 +83,7 @@ class CellSentenceDataset(Dataset):
         
         adata = sc.read_h5ad(file_path)
         
-        # Convert to cell sentences
+        # Convert to cell sentences using C2S-Scale-Gemma format
         cell_sentences = []
         gene_names = adata.var_names.tolist()
         
@@ -94,13 +94,14 @@ class CellSentenceDataset(Dataset):
             else:
                 expr = adata.X[i]
             
-            # Rank genes by expression (descending)
+            # Rank genes by expression (descending) - C2S-Scale-Gemma format
             ranked_indices = expr.argsort()[::-1]
             
-            # Create sentence: gene names ordered by expression
+            # Create sentence: gene names ordered by expression level (highest to lowest)
+            # Use top 1000 genes as recommended by C2S-Scale-Gemma documentation
             sentence = " ".join([
                 gene_names[idx] 
-                for idx in ranked_indices 
+                for idx in ranked_indices[:1000]  # Top 1000 genes
                 if expr[idx] > 0
             ])
             cell_sentences.append(sentence)
@@ -140,6 +141,34 @@ class CellSentenceDataset(Dataset):
         """Return number of cells."""
         return len(self.cell_data)
     
+    def create_c2s_prompt(self, cell_sentence: str, task: str = "cell_type", num_genes: int = 1000, organism: str = "Homo sapiens") -> str:
+        """
+        Create C2S-Scale-Gemma formatted prompt.
+        
+        Args:
+            cell_sentence: Space-separated gene names ordered by expression
+            task: Task type (cell_type, tissue, etc.)
+            num_genes: Number of genes in the sentence
+            organism: Organism name
+            
+        Returns:
+            Formatted prompt for C2S-Scale-Gemma model
+        """
+        if task == "cell_type":
+            prompt = f"""The following is a list of {num_genes} gene names ordered by descending expression level in a {organism} cell. Your task is to give the cell type which this cell belongs to based on its gene expression.
+Cell sentence: {cell_sentence}.
+The cell type corresponding to these genes is:"""
+        elif task == "tissue":
+            prompt = f"""The following is a list of {num_genes} gene names ordered by descending expression level in a {organism} cell. Your task is to give the tissue which this cell belongs to based on its gene expression.
+Cell sentence: {cell_sentence}.
+The tissue corresponding to these genes is:"""
+        else:
+            # Generic prompt
+            prompt = f"""The following is a list of {num_genes} gene names ordered by descending expression level in a {organism} cell.
+Cell sentence: {cell_sentence}."""
+            
+        return prompt
+    
     def __getitem__(self, idx: int) -> Dict[str, torch.Tensor]:
         """
         Get item by index.
@@ -149,10 +178,15 @@ class CellSentenceDataset(Dataset):
         """
         row = self.cell_data.iloc[idx]
         
-        # Tokenize cell sentence
-        sentence = row['cell_sentence']
+        # Get cell sentence
+        cell_sentence = row['cell_sentence']
+        
+        # Create C2S-Scale-Gemma formatted prompt
+        prompt = self.create_c2s_prompt(cell_sentence, task="cell_type")
+        
+        # Tokenize the prompt
         tokenized = self.tokenizer(
-            sentence,
+            prompt,
             max_length=self.max_seq_length,
             padding='max_length',
             truncation=True,
@@ -162,6 +196,8 @@ class CellSentenceDataset(Dataset):
         return {
             'input_ids': tokenized['input_ids'].squeeze(0),
             'attention_mask': tokenized['attention_mask'].squeeze(0),
+            'cell_sentence': cell_sentence,
+            'prompt': prompt,
             'cell_id': row['cell_id'],
             'cell_type': row['cell_type'],
             'tissue': row['tissue'],

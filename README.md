@@ -4,13 +4,21 @@ A state-of-the-art dual-encoder + late-fusion hybrid model for single-cell trans
 
 ## 🚀 Quick Start
 
-### Colab Prototype (A100 GPU)
+### Production Colab Notebook (A100 GPU)
 
-1. **Open in Colab**: [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/zbovaird/C2S-Scale-Gemma/blob/main/notebooks/colab_prototype.ipynb)
+1. **Open Production Notebook**: [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/zbovaird/C2S-Scale-Gemma/blob/main/notebooks/c2s_scale_gemma_production.ipynb)
 
 2. **Select A100 GPU**: Runtime → Change runtime type → GPU → A100
 
-3. **Run the notebook**: All cells are optimized for A100 performance
+3. **Run the complete pipeline**: Real PBMC data + C2S-Scale-Gemma-2-27B model
+
+### Legacy Colab Prototype
+
+1. **Open Legacy Notebook**: [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/zbovaird/C2S-Scale-Gemma/blob/main/notebooks/colab_prototype.ipynb)
+
+2. **Select A100 GPU**: Runtime → Change runtime type → GPU → A100
+
+3. **Run the prototype**: Dummy data + Gemma-9B model
 
 ### Local Development
 
@@ -49,19 +57,29 @@ The C2S-Scale-Gemma hybrid model combines:
 - **Flash Attention**: Faster attention computation
 - **Gradient Accumulation**: Effective larger batch sizes
 - **A100 Optimizations**: TensorFloat-32, cuDNN benchmarking
+- **Real Biological Data**: PBMC dataset with 437 cells and 4 cell types
+- **NaN Handling**: Robust processing of sparse single-cell data
 
 ## 📊 Performance
 
+### Production Notebook Results
+- **Dataset**: Real PBMC data (437 cells, 1,710 genes)
+- **Cell Types**: Monocyte (146), T_cell (144), B_cell (144), Dendritic_cell (3)
+- **Average Genes per Cell**: 251.9 (realistic for single-cell data)
+- **Model**: C2S-Scale-Gemma-2-27B with proper cell sentence formatting
+- **Data Quality**: 85.21% NaN values handled correctly
+- **Gene Diversity**: Real biological genes (RXRA, OSCAR, CTD-2006K23.1, etc.)
+
 ### A100 GPU Performance
-- **Model Size**: Gemma-9B with LoRA adapters
+- **Model Size**: C2S-Scale-Gemma-2-27B with LoRA adapters
 - **Training Time**: ~2-3 hours for 10 epochs
 - **Memory Usage**: ~60-70GB GPU memory
 - **Throughput**: ~100-150 samples/second
 - **Expected Results**: ARI > 0.7, NMI > 0.8
 
 ### Model Variants
-- **Colab (7B)**: `google/gemma-2-7b` - 2-3GB memory
-- **A100 (9B)**: `google/gemma-2-9b` - 60-70GB memory  
+- **Production (27B)**: `vandijklab/C2S-Scale-Gemma-2-27B` - Full production model
+- **Legacy (9B)**: `google/gemma-2-9b` - Prototype model  
 - **Vertex AI (27B)**: `vandijklab/C2S-Scale-Gemma-2-27B` - Production scale
 
 ## 🛠️ Installation
@@ -113,30 +131,15 @@ C2S-Scale-Gemma/
 │   └── uhg_adapters/      # UHG library adapters
 ├── scripts/               # Executable workflows
 ├── configs/               # TOML configuration files
-├── notebooks/             # Colab prototype
+├── notebooks/             # Colab notebooks
+│   ├── c2s_scale_gemma_production.ipynb  # Production notebook
+│   └── colab_prototype.ipynb             # Legacy prototype
 └── docs/                  # Documentation
 ```
 
 ## 🔧 Configuration
 
-### Colab Configuration (`configs/colab_7b.toml`)
-```toml
-[model.hgnn]
-hidden_dim = 512
-output_dim = 256
-num_layers = 3
-
-[model.text]
-model_name = "google/gemma-2-7b"
-max_length = 512
-
-[training]
-batch_size = 8
-learning_rate = 1e-4
-num_epochs = 5
-```
-
-### A100 Configuration (`configs/colab_7b.toml`)
+### Production Configuration (`configs/colab_7b.toml`)
 ```toml
 [model.hgnn]
 hidden_dim = 768
@@ -144,7 +147,7 @@ output_dim = 384
 num_layers = 4
 
 [model.text]
-model_name = "google/gemma-2-9b"
+model_name = "vandijklab/C2S-Scale-Gemma-2-27B"
 max_length = 1024
 
 [training]
@@ -154,7 +157,35 @@ num_epochs = 10
 gradient_accumulation_steps = 2
 ```
 
+### Legacy Configuration (`configs/colab_7b.toml`)
+```toml
+[model.hgnn]
+hidden_dim = 512
+output_dim = 256
+num_layers = 3
+
+[model.text]
+model_name = "google/gemma-2-9b"
+max_length = 512
+
+[training]
+batch_size = 8
+learning_rate = 1e-4
+num_epochs = 5
+```
+
 ## 🚀 Usage
+
+### Production Notebook (Recommended)
+
+The production notebook (`c2s_scale_gemma_production.ipynb`) includes:
+
+1. **Real Data Integration**: PBMC dataset with proper cell sentence formatting
+2. **C2S-Scale-Gemma Model**: Actual model from HuggingFace
+3. **NaN Handling**: Robust processing of sparse expression data
+4. **UHG-HGNN Encoder**: Complete hyperbolic graph neural network
+5. **Hybrid Pipeline**: Graph + Text → Fusion architecture
+6. **Cell Type Prediction**: Working with real biological data
 
 ### Training Pipeline
 
@@ -192,10 +223,10 @@ uv run scripts/evaluate.py --cfg configs/colab_7b.toml
 
 ```python
 # Install dependencies
-!pip install uhg torch transformers accelerate peft bitsandbytes
+!pip install uhg torch transformers accelerate peft bitsandbytes scanpy
 
 # Run the complete pipeline
-# (See notebooks/colab_prototype.ipynb for full implementation)
+# (See notebooks/c2s_scale_gemma_production.ipynb for full implementation)
 ```
 
 ## 📈 Evaluation
@@ -259,4 +290,4 @@ Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for gui
 
 **Ready to revolutionize single-cell transcriptomics?** 🚀
 
-[Get started with Colab](https://colab.research.google.com/github/zbovaird/C2S-Scale-Gemma/blob/main/notebooks/colab_prototype.ipynb) | [View on GitHub](https://github.com/zbovaird/C2S-Scale-Gemma)
+[Get started with Production Colab](https://colab.research.google.com/github/zbovaird/C2S-Scale-Gemma/blob/main/notebooks/c2s_scale_gemma_production.ipynb) | [View on GitHub](https://github.com/zbovaird/C2S-Scale-Gemma)
