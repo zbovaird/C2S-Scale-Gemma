@@ -1,0 +1,191 @@
+# Cancer Research Configuration
+# Configuration for C2S-Scale-Gemma hybrid model cancer research
+
+[data]
+# Cancer datasets
+cancer_datasets = ["tcga", "cellxgene_cancer", "ccle"]
+drug_databases = ["chembl", "drugbank", "kegg"]
+pathway_databases = ["kegg", "reactome", "biocarta"]
+
+# Data paths
+cancer_data_dir = "data/cancer"
+processed_graphs_dir = "data/processed/graphs"
+cancer_graphs_dir = "data/processed/graphs/cancer"
+
+# Graph parameters
+drug_target_threshold = 0.5
+protein_interaction_threshold = 400
+pathway_gene_threshold = 0.7
+tumor_microenvironment_threshold = 0.7
+
+[model]
+# Model architecture
+model_name = "vandijklab/C2S-Scale-Gemma-2-27B"
+cancer_specific_training = true
+clinical_context_integration = true
+
+# HGNN configuration
+[hgnn]
+input_dim = 2000
+hidden_dim = 768
+output_dim = 384
+num_layers = 4
+dropout = 0.1
+curvature = -1.0
+layer_type = "graphsage"
+use_uhg_norm = true
+residual_connections = true
+pooling_method = "projective_average"
+projection_type = "monotone_radial"
+preserve_angular = true
+
+# Cancer-specific HGNN enhancements
+[hgnn.cancer]
+hierarchical_taxonomy = true
+temporal_evolution = true
+spatial_temporal = true
+cancer_specific_genes = true
+drug_resistance_modeling = true
+metastasis_prediction = true
+
+# Text encoder configuration
+[text]
+model_name = "vandijklab/C2S-Scale-Gemma-2-27B"
+max_length = 1024
+hidden_size = 4096
+quantization = { load_in_4bit = true, bnb_4bit_compute_dtype = "bfloat16", bnb_4bit_use_double_quant = true, bnb_4bit_quant_type = "nf4" }
+lora = { r = 32, alpha = 64, dropout = 0.05, target_modules = ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"] }
+
+# Cancer-specific text enhancements
+[text.cancer]
+clinical_context = true
+drug_gene_relationships = true
+pathway_information = true
+cancer_specific_prompts = true
+patient_demographics = true
+treatment_history = true
+survival_outcomes = true
+
+# Fusion configuration
+[fusion]
+dim = 768
+dropout = 0.1
+fusion_type = "attention"
+attention_heads = 8
+cancer_specific_fusion = true
+
+# Training configuration
+[training]
+batch_size = 8
+learning_rate = 1.5e-4
+num_epochs = 10
+gradient_accumulation_steps = 4
+warmup_steps = 100
+grad_clip_norm = 1.0
+contrastive_temperature = 0.07
+hard_negative_weight = 0.5
+
+# Cancer-specific training
+[training.cancer]
+drug_response_weight = 0.3
+prognosis_weight = 0.2
+biomarker_weight = 0.2
+classification_weight = 0.3
+clinical_relevance_weight = 0.1
+
+# Cancer-specific losses
+[training.cancer_losses]
+drug_response_loss = "mse"
+prognosis_loss = "cox"
+biomarker_loss = "contrastive"
+classification_loss = "cross_entropy"
+clinical_relevance_loss = "correlation"
+
+# Evaluation configuration
+[evaluation]
+# Cancer research tasks
+[evaluation.cancer_tasks]
+drug_response_prediction = true
+cancer_type_classification = true
+prognosis_prediction = true
+biomarker_discovery = true
+drug_discovery = true
+metastasis_prediction = true
+treatment_response = true
+survival_prediction = true
+
+# Evaluation metrics
+[evaluation.metrics]
+clinical_relevance = true
+drug_response_metrics = true
+biomarker_quality = true
+interpretability = true
+cross_validation = true
+external_validation = true
+
+# Cancer-specific metrics
+[evaluation.cancer_metrics]
+drug_response_auroc = true
+prognosis_c_index = true
+biomarker_enrichment = true
+clinical_utility = true
+attention_interpretability = true
+
+# Vertex AI configuration
+[vertex_ai]
+project_id = "your-gcp-project"
+region = "us-central1"
+bucket_name = "your-gcs-bucket"
+service_account = "your-service-account"
+
+# Compute configuration
+[vertex_ai.compute]
+machine_type = "a3-highgpu-8g"
+accelerator_type = "NVIDIA_H100"
+accelerator_count = 2
+disk_size_gb = 100
+disk_type = "pd-ssd"
+
+# Cancer research deployment
+[vertex_ai.cancer_research]
+cancer_research_endpoint = true
+drug_discovery_api = true
+biomarker_discovery_api = true
+clinical_decision_support = true
+real_time_inference = true
+
+# API configuration
+[vertex_ai.api]
+max_concurrent_requests = 100
+request_timeout = 30
+response_cache_ttl = 3600
+rate_limiting = true
+
+# Monitoring and logging
+[monitoring]
+mlflow_tracking_uri = "gs://your-bucket/mlflow"
+wandb_project = "c2s-scale-gemma-cancer"
+log_level = "INFO"
+experiment_name = "cancer_research_v1"
+
+# Cancer-specific monitoring
+[monitoring.cancer]
+clinical_metrics_tracking = true
+drug_response_monitoring = true
+biomarker_validation = true
+patient_outcome_tracking = true
+
+# Security and compliance
+[security]
+data_encryption = true
+access_control = true
+audit_logging = true
+hipaa_compliance = true
+gdpr_compliance = true
+
+# Cancer data privacy
+[security.cancer_data]
+patient_data_anonymization = true
+clinical_data_encryption = true
+research_data_access_control = true
+irb_approval_required = true
