@@ -34,7 +34,7 @@ WORKDIR /app
 COPY . /app/
 
 # Install Python dependencies
-RUN uv sync --frozen
+RUN uv sync --frozen --verbose
 
 # Create directories
 RUN mkdir -p /app/data/cancer /app/data/processed/graphs /app/models /app/logs
