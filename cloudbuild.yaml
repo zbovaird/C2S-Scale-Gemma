@@ -3,22 +3,22 @@ steps:
   - name: 'gcr.io/cloud-builders/docker'
     args: [
       'build', 
-      '-t', 'gcr.io/$PROJECT_ID/c2s-scale-gemma-cancer:latest',
-      '-t', 'gcr.io/$PROJECT_ID/c2s-scale-gemma-cancer:$COMMIT_SHA',
+      '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/c2s-scale-gemma-repo/c2s-scale-gemma-cancer:latest',
+      '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/c2s-scale-gemma-repo/c2s-scale-gemma-cancer:$COMMIT_SHA',
       '.'
     ]
   
-  # Push to Container Registry
+  # Push to Artifact Registry
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/$PROJECT_ID/c2s-scale-gemma-cancer:latest']
+    args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/c2s-scale-gemma-repo/c2s-scale-gemma-cancer:latest']
   
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/$PROJECT_ID/c2s-scale-gemma-cancer:$COMMIT_SHA']
+    args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/c2s-scale-gemma-repo/c2s-scale-gemma-cancer:$COMMIT_SHA']
 
-# Store images in Container Registry
+# Store images in Artifact Registry
 images:
-  - 'gcr.io/$PROJECT_ID/c2s-scale-gemma-cancer:latest'
-  - 'gcr.io/$PROJECT_ID/c2s-scale-gemma-cancer:$COMMIT_SHA'
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/c2s-scale-gemma-repo/c2s-scale-gemma-cancer:latest'
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/c2s-scale-gemma-repo/c2s-scale-gemma-cancer:$COMMIT_SHA'
 
 # Build options
 options:
