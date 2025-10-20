@@ -19,8 +19,12 @@ RUN apt-get update && apt-get install -y \
 # Create symbolic link for python
 RUN ln -s /usr/bin/python3.10 /usr/bin/python
 
-# Install uv for Python package management
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+# Install uv for Python package management and update PATH
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
+    export PATH="/root/.cargo/bin:$PATH" && \
+    uv --version
+
+# Set PATH environment variable for subsequent commands
 ENV PATH="/root/.cargo/bin:$PATH"
 
 # Set working directory
