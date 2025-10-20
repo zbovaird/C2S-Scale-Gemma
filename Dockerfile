@@ -36,6 +36,9 @@ COPY . /app/
 # Install Python dependencies
 RUN uv sync --frozen --verbose
 
+# Explicitly install PyTorch with CUDA support
+RUN uv add torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+
 # Create directories
 RUN mkdir -p /app/data/cancer /app/data/processed/graphs /app/models /app/logs
 
