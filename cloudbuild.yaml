@@ -1,0 +1,27 @@
+steps:
+  # Build Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: [
+      'build', 
+      '-t', 'gcr.io/$PROJECT_ID/c2s-scale-gemma-cancer:latest',
+      '-t', 'gcr.io/$PROJECT_ID/c2s-scale-gemma-cancer:$COMMIT_SHA',
+      '.'
+    ]
+  
+  # Push to Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/c2s-scale-gemma-cancer:latest']
+  
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/c2s-scale-gemma-cancer:$COMMIT_SHA']
+
+# Store images in Container Registry
+images:
+  - 'gcr.io/$PROJECT_ID/c2s-scale-gemma-cancer:latest'
+  - 'gcr.io/$PROJECT_ID/c2s-scale-gemma-cancer:$COMMIT_SHA'
+
+# Build options
+options:
+  machineType: 'E2_HIGHCPU_8'
+  diskSizeGb: 100
+  logging: CLOUD_LOGGING_ONLY
