@@ -69,8 +69,6 @@ logs/
 
 # Documentation
 docs/
-*.md
-README.md
 
 # Tests
 tests/
