@@ -21,11 +21,11 @@ RUN ln -s /usr/bin/python3.10 /usr/bin/python
 
 # Install uv for Python package management and update PATH
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
-    export PATH="/root/.cargo/bin:$PATH" && \
+    export PATH="/root/.local/bin:$PATH" && \
     uv --version
 
 # Set PATH environment variable for subsequent commands
-ENV PATH="/root/.cargo/bin:$PATH"
+ENV PATH="/root/.local/bin:$PATH"
 
 # Set working directory
 WORKDIR /app
