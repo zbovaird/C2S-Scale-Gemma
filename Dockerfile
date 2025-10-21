@@ -1,23 +1,16 @@
-FROM nvidia/cuda:11.8.0-cudnn8-devel-ubuntu22.04
+FROM python:3.10-slim-bullseye
 
 # Set environment variables
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONUNBUFFERED=1
-ENV CUDA_VISIBLE_DEVICES=0
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
-    python3.10 \
-    python3.10-dev \
-    python3-pip \
     git \
     curl \
     wget \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
-
-# Create symbolic link for python
-RUN ln -s /usr/bin/python3.10 /usr/bin/python
 
 # Install uv for Python package management and update PATH
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
