@@ -36,11 +36,11 @@ COPY . /app/
 # Install Python dependencies
 RUN uv sync --frozen --verbose
 
-# Install CPU-only PyTorch (more reliable for CPU deployment)
-RUN pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu --verbose --no-cache-dir
+# Install CPU-only PyTorch using uv (in the same environment as other packages)
+RUN uv add torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu --verbose
 
 # Verify PyTorch installation
-RUN python -c "import torch; print(f'PyTorch version: {torch.__version__}')"
+RUN uv run python -c "import torch; print(f'PyTorch version: {torch.__version__}')"
 
 # Create directories
 RUN mkdir -p /app/data/cancer /app/data/processed/graphs /app/models /app/logs
@@ -57,4 +57,4 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8080/health || exit 1
 
 # Default command
-CMD ["python", "scripts/vertex_ai_server.py"]
+CMD ["uv", "run", "python", "scripts/vertex_ai_server.py"]
