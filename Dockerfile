@@ -36,8 +36,8 @@ COPY . /app/
 # Install Python dependencies
 RUN uv sync --frozen --verbose
 
-# Install CPU-only PyTorch using uv (in the same environment as other packages)
-RUN uv add torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu --verbose
+# Install CPU-only PyTorch using uv pip (in the same environment as other packages)
+RUN uv pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu --verbose
 
 # Verify PyTorch installation
 RUN uv run python -c "import torch; print(f'PyTorch version: {torch.__version__}')"
