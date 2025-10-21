@@ -37,7 +37,10 @@ COPY . /app/
 RUN uv sync --frozen --verbose
 
 # Explicitly install PyTorch with CUDA support using pip
-RUN pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+RUN pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118 --verbose --no-cache-dir
+
+# Verify PyTorch installation
+RUN python -c "import torch; print(f'PyTorch version: {torch.__version__}')"
 
 # Create directories
 RUN mkdir -p /app/data/cancer /app/data/processed/graphs /app/models /app/logs
