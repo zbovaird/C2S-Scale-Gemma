@@ -27,7 +27,8 @@ class InfoNCELoss(nn.Module):
         temperature: float = 0.07,
         hard_negative_mining: bool = True,
         num_hard_negatives: int = 5,
-        margin: float = 0.5
+        margin: float = 0.5,
+        hard_negative_weight: float = 1.0,
     ):
         """
         Initialize InfoNCE loss.
@@ -44,6 +45,7 @@ class InfoNCELoss(nn.Module):
         self.hard_negative_mining = hard_negative_mining
         self.num_hard_negatives = num_hard_negatives
         self.margin = margin
+        self.hard_negative_weight = hard_negative_weight
         
         logger.info(f"Initialized InfoNCE loss: temp={temperature}, hard_neg={hard_negative_mining}")
     
@@ -89,7 +91,7 @@ class InfoNCELoss(nn.Module):
             )
         
         # Total loss
-        total_loss = infonce_loss + hard_negative_loss
+        total_loss = infonce_loss + (self.hard_negative_weight * hard_negative_loss)
         
         return {
             'total_loss': total_loss,

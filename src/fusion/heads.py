@@ -461,6 +461,28 @@ class ResidualBlock(nn.Module):
         return x
 
 
+class FusionHead(MLPFusionHead):
+    """Compatibility wrapper used by the training scripts.
+
+    The scripts instantiate ``FusionHead(graph_dim=..., text_dim=..., fusion_dim=...)``
+    while the internal implementation names the output width ``output_dim``.
+    """
+
+    def __init__(
+        self,
+        graph_dim: int,
+        text_dim: int,
+        fusion_dim: int,
+        **kwargs,
+    ):
+        super().__init__(
+            text_dim=text_dim,
+            graph_dim=graph_dim,
+            output_dim=fusion_dim,
+            **kwargs,
+        )
+
+
 def create_fusion_head(
     head_type: str = "mlp",
     text_dim: int = 2048,
