@@ -462,3 +462,7 @@ def create_uhg_encoder(
         )
     else:
         raise ValueError(f"Unknown encoder type: {encoder_type}")
+
+
+# Backward-compatible export used by script entrypoints.
+from .uhg_hgnn_encoder import UHGHGNNEncoder, create_uhg_hgnn_encoder  # noqa: E402

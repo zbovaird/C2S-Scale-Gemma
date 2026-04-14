@@ -56,7 +56,9 @@ class UHGHGNNEncoder(nn.Module):
         # Contrastive learning parameters
         contrastive_temperature: float = 0.07,
         contrastive_margin: float = 1.0,
-        hard_negative_mining: bool = True
+        hard_negative_mining: bool = True,
+        curvature: float = -1.0,
+        device: Optional[torch.device] = None,
     ):
         """
         Initialize UHG-HGNN encoder.
@@ -99,6 +101,8 @@ class UHGHGNNEncoder(nn.Module):
         self.contrastive_temperature = contrastive_temperature
         self.contrastive_margin = contrastive_margin
         self.hard_negative_mining = hard_negative_mining
+        self.curvature = curvature
+        self.device = device
         
         # UHG operations
         self.uhg = ProjectiveUHG()

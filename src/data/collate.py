@@ -14,6 +14,17 @@ from torch.nn.utils.rnn import pad_sequence
 logger = logging.getLogger(__name__)
 
 
+class GraphTextCollator:
+    """Backward-compatible collator wrapper for script entrypoints."""
+
+    def __init__(self, tokenizer=None, max_length: Optional[int] = None):
+        self.tokenizer = tokenizer
+        self.max_length = max_length
+
+    def __call__(self, batch: List[Dict[str, torch.Tensor]]) -> Dict[str, torch.Tensor]:
+        return collate_paired_batch(batch)
+
+
 def collate_text_batch(batch: List[Dict[str, torch.Tensor]]) -> Dict[str, torch.Tensor]:
     """
     Collate batch of text data.

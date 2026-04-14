@@ -25,12 +25,17 @@ class LoRAAdapter(nn.Module):
     
     def __init__(
         self,
-        in_features: int,
-        out_features: int,
+        in_features: Optional[int] = None,
+        out_features: Optional[int] = None,
         rank: int = 16,
         alpha: float = 16.0,
         dropout: float = 0.05,
-        bias: str = "none"
+        bias: str = "none",
+        model: Optional[PreTrainedModel] = None,
+        r: Optional[int] = None,
+        lora_alpha: Optional[float] = None,
+        lora_dropout: Optional[float] = None,
+        target_modules: Optional[List[str]] = None,
     ):
         """
         Initialize LoRA adapter.
@@ -45,12 +50,38 @@ class LoRAAdapter(nn.Module):
         """
         super().__init__()
         
+        rank = r or rank
+        alpha = lora_alpha or alpha
+        dropout = lora_dropout or dropout
+
+        self.model = None
+        self.manager = None
         self.in_features = in_features
         self.out_features = out_features
         self.rank = rank
         self.alpha = alpha
         self.dropout = dropout
         self.bias = bias
+
+        if model is not None:
+            self.manager = LoRAManager(
+                model=model,
+                lora_config={
+                    "r": rank,
+                    "alpha": alpha,
+                    "dropout": dropout,
+                    "bias": bias,
+                },
+                target_modules=target_modules,
+            )
+            self.model = self.manager.apply_lora()
+            logger.info("Initialized LoRA adapter in model-wrapper mode")
+            return
+
+        if in_features is None or out_features is None:
+            raise ValueError(
+                "LoRAAdapter requires in_features/out_features unless a model is provided."
+            )
         
         # LoRA matrices
         self.lora_A = nn.Parameter(torch.randn(rank, in_features) * 0.01)
@@ -69,7 +100,7 @@ class LoRAAdapter(nn.Module):
         
         logger.info(f"Initialized LoRA adapter: {in_features} -> {out_features}, rank={rank}")
     
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor = None, *args, **kwargs) -> torch.Tensor:
         """
         Forward pass through LoRA adapter.
         
@@ -79,6 +110,11 @@ class LoRAAdapter(nn.Module):
         Returns:
             Output tensor [..., out_features]
         """
+        if self.model is not None:
+            if x is None:
+                return self.model(*args, **kwargs)
+            return self.model(x, *args, **kwargs)
+
         # LoRA computation: x @ A^T @ B^T
         # A: [rank, in_features], B: [out_features, rank]
         # x: [..., in_features]

@@ -36,7 +36,10 @@ class GemmaLoader:
         lora_config: Optional[Dict] = None,
         gradient_checkpointing: bool = True,
         max_seq_length: int = 2048,
-        cache_dir: Optional[str] = None
+        cache_dir: Optional[str] = None,
+        device: Optional[torch.device] = None,
+        torch_dtype: Optional[torch.dtype] = None,
+        quantization_config: Optional[Dict] = None,
     ):
         """
         Initialize Gemma loader.
@@ -55,6 +58,9 @@ class GemmaLoader:
         self.gradient_checkpointing = gradient_checkpointing
         self.max_seq_length = max_seq_length
         self.cache_dir = cache_dir
+        self.device = device
+        self.torch_dtype = torch_dtype
+        self.quantization_config = quantization_config
         
         # Initialize components
         self.tokenizer = None

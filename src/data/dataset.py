@@ -10,11 +10,20 @@ from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
-import scanpy as sc
+try:
+    import scanpy as sc
+except ImportError:  # pragma: no cover - optional runtime dependency
+    sc = None
 import torch
 from torch.utils.data import Dataset, DataLoader
-from transformers import AutoTokenizer
-import anndata as ad
+try:
+    from transformers import AutoTokenizer
+except ImportError:  # pragma: no cover - optional runtime dependency
+    AutoTokenizer = None
+try:
+    import anndata as ad
+except ImportError:  # pragma: no cover - optional runtime dependency
+    ad = None
 
 logger = logging.getLogger(__name__)
 
@@ -29,9 +38,12 @@ class CellSentenceDataset(Dataset):
     def __init__(
         self,
         data_path: Union[str, Path],
+        tokenizer=None,
         tokenizer_name: str = "google/gemma-2-7b",
         max_seq_length: int = 2048,
-        cache_dir: Optional[str] = None
+        cache_dir: Optional[str] = None,
+        max_length: Optional[int] = None,
+        device: Optional[torch.device] = None,
     ):
         """
         Initialize dataset.
@@ -43,13 +55,21 @@ class CellSentenceDataset(Dataset):
             cache_dir: Cache directory for tokenizer
         """
         self.data_path = Path(data_path)
-        self.max_seq_length = max_seq_length
+        self.max_seq_length = max_length or max_seq_length
+        self.device = device
         
-        # Load tokenizer
-        self.tokenizer = AutoTokenizer.from_pretrained(
-            tokenizer_name,
-            cache_dir=cache_dir
-        )
+        # Reuse provided tokenizer when scripts already loaded one.
+        if tokenizer is not None:
+            self.tokenizer = tokenizer
+        else:
+            if AutoTokenizer is None:
+                raise ImportError(
+                    "transformers is required to construct a tokenizer automatically."
+                )
+            self.tokenizer = AutoTokenizer.from_pretrained(
+                tokenizer_name,
+                cache_dir=cache_dir
+            )
         
         # Load data
         self.cell_data = self._load_data()
@@ -80,6 +100,8 @@ class CellSentenceDataset(Dataset):
     def _load_h5ad(self, file_path: Path) -> pd.DataFrame:
         """Load AnnData file and convert to cell sentences."""
         logger.info(f"Loading AnnData from {file_path}")
+        if sc is None:
+            raise ImportError("scanpy is required to load .h5ad datasets.")
         
         adata = sc.read_h5ad(file_path)
         
@@ -220,6 +242,10 @@ Cell sentence: {cell_sentence}."""
     def get_tissue_counts(self) -> Dict[str, int]:
         """Get count of cells per tissue."""
         return self.cell_data['tissue'].value_counts().to_dict()
+
+
+class Cell2SentenceDataset(CellSentenceDataset):
+    """Compatibility alias for older script imports."""
 
 
 class GraphDataset(Dataset):
