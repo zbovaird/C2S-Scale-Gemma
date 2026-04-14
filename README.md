@@ -1,6 +1,33 @@
 # C2S-Scale-Gemma Hybrid Model
 
-A state-of-the-art dual-encoder + late-fusion hybrid model for single-cell transcriptomics analysis, combining hyperbolic graph neural networks with large language models.
+A dual-encoder + late-fusion system for single-cell transcriptomics that combines **Cell2Sentence / C2S-Scale-Gemma** with **UHG-based graph learning**.
+
+This repository is now being extended toward an **OKSM / OSKM reprogramming** research workflow focused on:
+
+- modeling productive vs alternative reprogramming trajectories
+- treating **POU5F1 / SOX2 / KLF4 / MYC** as first-class biological priors
+- using hyperbolic structure to separate branching cell-state transitions
+- supporting partial / transient reprogramming analyses relevant to **lifespan and longevity**
+
+The branch-level roadmap for that work lives in [`PROJECT_PLAN.md`](PROJECT_PLAN.md).
+
+## Research Direction
+
+The near-term objective is to turn the current hybrid into a more explicit **C2S + UHG platform for OKSM-driven cellular state analysis**.
+
+That means the codebase is evolving in phases:
+
+1. **Stabilize the dual-encoder stack** so scripts and `src/` modules agree.
+2. **Add OKSM-aware data priors** such as anchor genes in cell sentences and graph edge reweighting.
+3. **Move alignment and metrics closer to the intended geometry** for trajectory and safety analysis.
+4. **Add progress and research visuals** that make reprogramming state, risk, and branch structure interpretable.
+
+Current branch work includes:
+
+- restored script-facing compatibility wrappers for training and evaluation
+- a committed project roadmap in [`PROJECT_PLAN.md`](PROJECT_PLAN.md)
+- lightweight visualization-prep helpers in [`src/eval/reprogramming_visuals.py`](src/eval/reprogramming_visuals.py)
+- targeted tests in [`tests/`](tests/)
 
 ## 🚀 Quick Start
 
@@ -49,6 +76,14 @@ The C2S-Scale-Gemma hybrid model combines:
 - **LoRA Adapters**: Parameter-efficient fine-tuning
 - **Contrastive Alignment**: InfoNCE loss with hard negative mining
 - **Late Fusion**: Combines graph and text representations
+
+### OKSM-Oriented Additions
+
+The branch is adding three specific capabilities for reprogramming work:
+
+- **OSKM gene registry**: central alias handling for `POU5F1`, `SOX2`, `KLF4`, and `MYC`
+- **Sentence anchoring**: optional promotion of OSKM genes in Cell2Sentence inputs
+- **Graph reweighting**: optional kNN edge upweighting for OSKM-high neighborhoods
 
 ### Key Features
 
@@ -139,6 +174,24 @@ C2S-Scale-Gemma/
 
 ## 🔧 Configuration
 
+### OKSM / Reprogramming Options
+
+The data and graph pipeline now supports lightweight OKSM-aware configuration:
+
+```toml
+[knn_graph]
+oskm_reweight_enabled = true
+oskm_weight_multiplier = 1.5
+oskm_score_threshold = 0.0
+oskm_species = "human"
+```
+
+Dataset-side sentence anchoring is exposed in code through `CellSentenceDataset` and is intended to become config-driven in the training scripts as the branch progresses:
+
+- `top_genes`
+- `oskm_anchor_mode` (`"none"` or `"prepend_present"`)
+- `oskm_species`
+
 ### Production Configuration (`configs/colab_7b.toml`)
 ```toml
 [model.hgnn]
@@ -218,6 +271,21 @@ uv run scripts/finetune_lora.py --cfg configs/colab_7b.toml
 ```bash
 uv run scripts/evaluate.py --cfg configs/colab_7b.toml
 ```
+
+## 🧪 Testing
+
+Targeted CPU-friendly tests are included for the compatibility and OKSM groundwork:
+
+```bash
+pytest tests
+```
+
+The current tests focus on:
+
+- trainer and script-facing compatibility layers
+- lightweight alignment-loss behavior
+- visualization-prep helpers
+- Phase B utilities such as OSKM-aware data and graph helpers
 
 ### Colab Quick Start
 

@@ -45,6 +45,8 @@ def collate_text_batch(batch: List[Dict[str, torch.Tensor]]) -> Dict[str, torch.
     tissues = [item['tissue'] for item in batch]
     n_genes = torch.tensor([item['n_genes'] for item in batch])
     total_counts = torch.tensor([item['total_counts'] for item in batch])
+    oskm_scores = torch.tensor([item.get('oskm_score', 0.0) for item in batch], dtype=torch.float32)
+    oskm_present_symbols = [item.get('oskm_present_symbols', "") for item in batch]
     
     return {
         'input_ids': input_ids,
@@ -53,7 +55,9 @@ def collate_text_batch(batch: List[Dict[str, torch.Tensor]]) -> Dict[str, torch.
         'cell_types': cell_types,
         'tissues': tissues,
         'n_genes': n_genes,
-        'total_counts': total_counts
+        'total_counts': total_counts,
+        'oskm_scores': oskm_scores,
+        'oskm_present_symbols': oskm_present_symbols,
     }
 
 

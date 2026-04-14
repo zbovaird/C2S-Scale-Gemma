@@ -64,7 +64,11 @@ def build_all_graphs(
                 metric=knn_config.get('metric', 'cosine'),
                 use_embeddings=knn_config.get('use_embeddings', True),
                 embedding_method=knn_config.get('embedding_method', 'scanpy'),
-                n_jobs=knn_config.get('n_jobs', -1)
+                n_jobs=knn_config.get('n_jobs', -1),
+                oskm_reweight_enabled=knn_config.get('oskm_reweight_enabled', False),
+                oskm_weight_multiplier=knn_config.get('oskm_weight_multiplier', 1.5),
+                oskm_score_threshold=knn_config.get('oskm_score_threshold', 0.0),
+                oskm_species=knn_config.get('oskm_species', 'human'),
             )
             
             # Validate and save
@@ -201,7 +205,11 @@ def main():
             'metric': 'cosine',
             'use_embeddings': True,
             'embedding_method': 'scanpy',
-            'n_jobs': -1
+            'n_jobs': -1,
+            'oskm_reweight_enabled': False,
+            'oskm_weight_multiplier': 1.5,
+            'oskm_score_threshold': 0.0,
+            'oskm_species': 'human',
         }
     
     if 'lr_graph' not in cfg:
