@@ -111,6 +111,7 @@ c2s-evaluate = "scripts.evaluate:main"
 c2s-export = "scripts.export_artifacts:main"
 c2s-perturb-oskm = "scripts.perturb_oskm_expression:main"
 c2s-compare-perturbation = "scripts.compare_oskm_perturbation_embeddings:main"
+c2s-perturbation-report = "scripts.generate_oskm_perturbation_report:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src"]
