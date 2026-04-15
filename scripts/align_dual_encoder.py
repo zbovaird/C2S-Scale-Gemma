@@ -62,6 +62,8 @@ def create_data_loaders(
     device: torch.device
 ) -> tuple[DataLoader, DataLoader, DataLoader]:
     """Create train, validation, and test data loaders."""
+    data_config = config.get("data", {})
+    oskm_config = data_config.get("oskm", {})
     
     # Create datasets
     train_dataset = Cell2SentenceDataset(
@@ -69,6 +71,9 @@ def create_data_loaders(
         tokenizer=tokenizer,
         max_length=config["model"]["text"]["max_length"],
         device=device,
+        top_genes=data_config.get("top_genes", 1000),
+        oskm_anchor_mode=oskm_config.get("anchor_mode", "none"),
+        oskm_species=oskm_config.get("species", "human"),
     )
     
     val_dataset = Cell2SentenceDataset(
@@ -76,6 +81,9 @@ def create_data_loaders(
         tokenizer=tokenizer,
         max_length=config["model"]["text"]["max_length"],
         device=device,
+        top_genes=data_config.get("top_genes", 1000),
+        oskm_anchor_mode=oskm_config.get("anchor_mode", "none"),
+        oskm_species=oskm_config.get("species", "human"),
     )
     
     test_dataset = Cell2SentenceDataset(
@@ -83,6 +91,9 @@ def create_data_loaders(
         tokenizer=tokenizer,
         max_length=config["model"]["text"]["max_length"],
         device=device,
+        top_genes=data_config.get("top_genes", 1000),
+        oskm_anchor_mode=oskm_config.get("anchor_mode", "none"),
+        oskm_species=oskm_config.get("species", "human"),
     )
     
     # Create collator

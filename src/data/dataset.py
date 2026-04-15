@@ -25,6 +25,8 @@ try:
 except ImportError:  # pragma: no cover - optional runtime dependency
     ad = None
 
+from biology.oskm import resolve_oskm_genes
+
 logger = logging.getLogger(__name__)
 
 
@@ -44,6 +46,9 @@ class CellSentenceDataset(Dataset):
         cache_dir: Optional[str] = None,
         max_length: Optional[int] = None,
         device: Optional[torch.device] = None,
+        top_genes: int = 1000,
+        oskm_anchor_mode: str = "none",
+        oskm_species: str = "human",
     ):
         """
         Initialize dataset.
@@ -57,6 +62,9 @@ class CellSentenceDataset(Dataset):
         self.data_path = Path(data_path)
         self.max_seq_length = max_length or max_seq_length
         self.device = device
+        self.top_genes = top_genes
+        self.oskm_anchor_mode = oskm_anchor_mode
+        self.oskm_species = oskm_species
         
         # Reuse provided tokenizer when scripts already loaded one.
         if tokenizer is not None:
@@ -108,6 +116,11 @@ class CellSentenceDataset(Dataset):
         # Convert to cell sentences using C2S-Scale-Gemma format
         cell_sentences = []
         gene_names = adata.var_names.tolist()
+        gene_index_lookup = {gene_name: idx for idx, gene_name in enumerate(gene_names)}
+        resolved_oskm_genes = resolve_oskm_genes(gene_names, species=self.oskm_species)
+        anchor_genes = list(resolved_oskm_genes.values())
+        oskm_scores = []
+        oskm_present_symbols = []
         
         for i in range(adata.n_obs):
             # Get expression values
@@ -118,15 +131,22 @@ class CellSentenceDataset(Dataset):
             
             # Rank genes by expression (descending) - C2S-Scale-Gemma format
             ranked_indices = expr.argsort()[::-1]
-            
-            # Create sentence: gene names ordered by expression level (highest to lowest)
-            # Use top 1000 genes as recommended by C2S-Scale-Gemma documentation
-            sentence = " ".join([
-                gene_names[idx] 
-                for idx in ranked_indices[:1000]  # Top 1000 genes
+            ranked_gene_names = [
+                gene_names[idx]
+                for idx in ranked_indices[: self.top_genes]
                 if expr[idx] > 0
-            ])
+            ]
+            ranked_gene_names = self._apply_anchor_policy(ranked_gene_names, anchor_genes)
+            sentence = " ".join(ranked_gene_names)
             cell_sentences.append(sentence)
+
+            present_symbols = [
+                symbol for symbol in anchor_genes if symbol in ranked_gene_names
+            ]
+            oskm_present_symbols.append(" ".join(present_symbols))
+            oskm_scores.append(
+                float(sum(expr[gene_index_lookup[symbol]] for symbol in present_symbols))
+            )
         
         # Create DataFrame
         df = pd.DataFrame({
@@ -135,10 +155,28 @@ class CellSentenceDataset(Dataset):
             'cell_type': adata.obs.get('cell_type', 'unknown'),
             'tissue': adata.obs.get('tissue', 'unknown'),
             'n_genes': adata.obs.get('n_genes', 0),
-            'total_counts': adata.obs.get('total_counts', 0)
+            'total_counts': adata.obs.get('total_counts', 0),
+            'oskm_score': oskm_scores,
+            'oskm_present_symbols': oskm_present_symbols,
         })
         
         return df
+
+    def _apply_anchor_policy(
+        self,
+        ranked_gene_names: List[str],
+        anchor_genes: List[str],
+    ) -> List[str]:
+        """Optionally promote OKSM genes in the cell sentence."""
+        if self.oskm_anchor_mode == "none":
+            return ranked_gene_names
+
+        if self.oskm_anchor_mode != "prepend_present":
+            raise ValueError(f"Unsupported oskm_anchor_mode: {self.oskm_anchor_mode}")
+
+        anchor_hits = [gene for gene in anchor_genes if gene in ranked_gene_names]
+        non_anchor_genes = [gene for gene in ranked_gene_names if gene not in anchor_hits]
+        return anchor_hits + non_anchor_genes
     
     def _load_csv(self, file_path: Path) -> pd.DataFrame:
         """Load CSV file."""
@@ -224,7 +262,9 @@ Cell sentence: {cell_sentence}."""
             'cell_type': row['cell_type'],
             'tissue': row['tissue'],
             'n_genes': row['n_genes'],
-            'total_counts': row['total_counts']
+            'total_counts': row['total_counts'],
+            'oskm_score': row.get('oskm_score', 0.0),
+            'oskm_present_symbols': row.get('oskm_present_symbols', ""),
         }
     
     def get_cell_types(self) -> List[str]:

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 kNN graph construction for single-cell data.
 
@@ -6,17 +8,43 @@ Builds cell-cell k-nearest neighbor graphs from embeddings.
 
 import logging
 from pathlib import Path
-from typing import Optional, Tuple, Union
+from typing import Dict, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import pandas as pd
-import scanpy as sc
+try:
+    import scanpy as sc
+except ImportError:  # pragma: no cover - optional runtime dependency
+    sc = None
 import torch
-from sklearn.neighbors import NearestNeighbors
-from pynndescent import NNDescent
-import anndata as ad
+try:
+    from sklearn.neighbors import NearestNeighbors
+except Exception:  # pragma: no cover - optional runtime dependency
+    NearestNeighbors = None
+try:
+    from pynndescent import NNDescent
+except Exception:  # pragma: no cover - optional runtime dependency
+    NNDescent = None
+try:
+    import anndata as ad
+except ImportError:  # pragma: no cover - optional runtime dependency
+    ad = None
+
+from biology.oskm import resolve_oskm_genes
 
 logger = logging.getLogger(__name__)
+
+
+def compute_oskm_edge_multiplier(
+    source_score: float,
+    target_score: float,
+    weight_multiplier: float = 1.5,
+    score_threshold: float = 0.0,
+) -> float:
+    """Return the edge multiplier for an OSKM-aware kNN connection."""
+    if source_score > score_threshold and target_score > score_threshold:
+        return weight_multiplier
+    return 1.0
 
 
 def build_knn_graph(
@@ -25,7 +53,11 @@ def build_knn_graph(
     metric: str = "cosine",
     use_embeddings: bool = True,
     embedding_method: str = "scanpy",
-    n_jobs: int = -1
+    n_jobs: int = -1,
+    oskm_reweight_enabled: bool = False,
+    oskm_weight_multiplier: float = 1.5,
+    oskm_score_threshold: float = 0.0,
+    oskm_species: str = "human",
 ) -> pd.DataFrame:
     """
     Build k-nearest neighbor graph from single-cell data.
@@ -42,6 +74,8 @@ def build_knn_graph(
         DataFrame with kNN edges (source, target, distance)
     """
     logger.info(f"Building kNN graph with k={k}, metric={metric}")
+    if NearestNeighbors is None:
+        raise ImportError("scikit-learn is required to build kNN graphs.")
     
     # Get features for kNN computation
     if use_embeddings:
@@ -94,6 +128,15 @@ def build_knn_graph(
     
     # Create DataFrame
     edges_df = pd.DataFrame(edges)
+
+    if oskm_reweight_enabled:
+        edges_df = apply_oskm_knn_reweighting(
+            edges_df,
+            adata,
+            weight_multiplier=oskm_weight_multiplier,
+            score_threshold=oskm_score_threshold,
+            species=oskm_species,
+        )
     
     logger.info(f"Built kNN graph with {len(edges_df)} edges")
     
@@ -106,7 +149,11 @@ def build_knn_graph_fast(
     metric: str = "cosine",
     use_embeddings: bool = True,
     embedding_method: str = "scanpy",
-    n_jobs: int = -1
+    n_jobs: int = -1,
+    oskm_reweight_enabled: bool = False,
+    oskm_weight_multiplier: float = 1.5,
+    oskm_score_threshold: float = 0.0,
+    oskm_species: str = "human",
 ) -> pd.DataFrame:
     """
     Build kNN graph using pynndescent for faster computation.
@@ -123,6 +170,8 @@ def build_knn_graph_fast(
         DataFrame with kNN edges
     """
     logger.info(f"Building kNN graph (fast) with k={k}, metric={metric}")
+    if NNDescent is None:
+        raise ImportError("pynndescent is required to build fast kNN graphs.")
     
     # Get features
     if use_embeddings:
@@ -167,10 +216,79 @@ def build_knn_graph_fast(
     
     # Create DataFrame
     edges_df = pd.DataFrame(edges)
+
+    if oskm_reweight_enabled:
+        edges_df = apply_oskm_knn_reweighting(
+            edges_df,
+            adata,
+            weight_multiplier=oskm_weight_multiplier,
+            score_threshold=oskm_score_threshold,
+            species=oskm_species,
+        )
     
     logger.info(f"Built kNN graph (fast) with {len(edges_df)} edges")
     
     return edges_df
+
+
+def compute_oskm_cell_scores(
+    adata: ad.AnnData,
+    species: str = "human",
+) -> Dict[str, float]:
+    """Compute a simple additive OSKM score for each cell."""
+    resolved = resolve_oskm_genes(adata.var_names.tolist(), species=species)
+    if not resolved:
+        return {str(cell_id): 0.0 for cell_id in adata.obs.index.tolist()}
+
+    gene_indices = [adata.var_names.get_loc(symbol) for symbol in resolved.values()]
+    matrix = adata.X.toarray() if hasattr(adata.X, "toarray") else np.asarray(adata.X)
+    scores = matrix[:, gene_indices].sum(axis=1)
+    return {
+        str(cell_id): float(score)
+        for cell_id, score in zip(adata.obs.index.tolist(), np.asarray(scores).ravel())
+    }
+
+
+def apply_oskm_knn_reweighting(
+    edges_df: pd.DataFrame,
+    adata: ad.AnnData,
+    weight_multiplier: float = 1.5,
+    score_threshold: float = 0.0,
+    species: str = "human",
+) -> pd.DataFrame:
+    """Upweight edges connecting OSKM-high cells by shrinking effective distance."""
+    reweighted_df = edges_df.copy()
+    cell_scores = compute_oskm_cell_scores(adata, species=species)
+
+    reweighted_df["source_oskm_score"] = reweighted_df["source"].map(cell_scores).fillna(0.0)
+    reweighted_df["target_oskm_score"] = reweighted_df["target"].map(cell_scores).fillna(0.0)
+    reweighted_df["original_distance"] = reweighted_df["distance"]
+
+    reweighted_df["oskm_weight_multiplier"] = [
+        compute_oskm_edge_multiplier(
+            source_score=source_score,
+            target_score=target_score,
+            weight_multiplier=weight_multiplier,
+            score_threshold=score_threshold,
+        )
+        for source_score, target_score in zip(
+            reweighted_df["source_oskm_score"], reweighted_df["target_oskm_score"]
+        )
+    ]
+    both_oskm_high = reweighted_df["oskm_weight_multiplier"] > 1.0
+    reweighted_df["distance"] = (
+        reweighted_df["original_distance"] / reweighted_df["oskm_weight_multiplier"]
+    )
+    reweighted_df["weight"] = (
+        1.0 / (1.0 + reweighted_df["distance"])
+    ) * reweighted_df["oskm_weight_multiplier"]
+
+    logger.info(
+        "Applied OSKM reweighting to %s / %s kNN edges",
+        int(both_oskm_high.sum()),
+        len(reweighted_df),
+    )
+    return reweighted_df
 
 
 def _compute_embeddings(adata: ad.AnnData, method: str = "scanpy") -> np.ndarray:
@@ -185,6 +303,8 @@ def _compute_embeddings(adata: ad.AnnData, method: str = "scanpy") -> np.ndarray
         Embeddings array
     """
     logger.info(f"Computing embeddings using {method}")
+    if sc is None:
+        raise ImportError("scanpy is required to compute graph embeddings.")
     
     if method == "scanpy":
         # Use scanpy's PCA + UMAP pipeline
