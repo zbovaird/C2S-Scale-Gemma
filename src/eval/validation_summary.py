@@ -115,6 +115,7 @@ def build_validation_benchmark_summary(
             track_config=track_config,
             fused_shift_rows=payload.get("fused_shift_rows", []),
         )
+    timepoint_comparison = build_timepoint_comparison_rows(timepoint_summaries)
     return {
         "track_name": validation_manifest.get("track_name"),
         "dataset_profile": validation_manifest.get("dataset_profile"),
@@ -125,4 +126,42 @@ def build_validation_benchmark_summary(
         "runs": rows_sorted,
         "best_by_mean_l2_shift": best_run,
         "timepoint_summaries": timepoint_summaries,
+        "timepoint_comparison": timepoint_comparison,
     }
+
+
+def build_timepoint_comparison_rows(
+    timepoint_summaries: Dict[str, Sequence[Dict[str, Any]]],
+    baseline_label: str = "euclidean",
+) -> list[dict]:
+    """Compare timepoint summaries against a baseline alignment run."""
+    baseline_rows = {
+        str(row["timepoint"]): row for row in timepoint_summaries.get(baseline_label, [])
+    }
+    comparison_rows = []
+    for label, rows in timepoint_summaries.items():
+        if label == baseline_label:
+            continue
+        for row in rows:
+            timepoint = str(row["timepoint"])
+            baseline_row = baseline_rows.get(timepoint)
+            if baseline_row is None:
+                continue
+            comparison_rows.append(
+                {
+                    "label": label,
+                    "baseline_label": baseline_label,
+                    "timepoint": timepoint,
+                    "delta_mean_l2_shift": float(row["mean_l2_shift"])
+                    - float(baseline_row["mean_l2_shift"]),
+                    "delta_productive_fraction": float(row["productive_fraction"])
+                    - float(baseline_row["productive_fraction"]),
+                    "delta_safe_fraction": float(row["safe_fraction"])
+                    - float(baseline_row["safe_fraction"]),
+                    "delta_risk_fraction": float(row["risk_fraction"])
+                    - float(baseline_row["risk_fraction"]),
+                    "delta_mean_progress_delta": float(row["mean_progress_delta"])
+                    - float(baseline_row["mean_progress_delta"]),
+                }
+            )
+    return comparison_rows
