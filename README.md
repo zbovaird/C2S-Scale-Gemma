@@ -404,6 +404,7 @@ uv run scripts/summarize_validation_bundle.py \
 This produces `validation_benchmark_summary.json` and `VALIDATION_BENCHMARK.md` for the named study.
 
 When the study track declares a `timepoint_column`, the validation benchmark also includes per-timepoint progression summaries so Euclidean and projective runs can be compared by stage, not just by aggregate shift/safety metrics.
+The validation-track registry also carries recommendation thresholds, so the benchmark summary can emit a track-specific judgment such as `prefer_projective`, `mixed`, or `prefer_euclidean`.
 
 This produces:
 

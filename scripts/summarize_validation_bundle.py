@@ -28,6 +28,12 @@ def write_markdown_summary(output_path: Path, summary: dict) -> None:
         f"- dataset_profile: {summary.get('dataset_profile')}",
         f"- primary_metrics: {', '.join(summary.get('primary_metrics', []))}",
         "",
+        "## Recommendation",
+        "",
+        f"- status: {summary.get('recommendation', {}).get('status')}",
+        f"- preferred_alignment: {summary.get('recommendation', {}).get('preferred_alignment')}",
+        f"- reason: {summary.get('recommendation', {}).get('reason')}",
+        "",
         "## Runs",
         "",
     ]

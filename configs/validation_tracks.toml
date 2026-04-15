@@ -15,6 +15,14 @@ timepoint_column = "timepoint"
 expected_timepoints = ["D0", "D2", "D4", "D6", "D8", "D10", "D12", "D14", "iPSC"]
 primary_metrics = ["mean_l2_shift", "productive_fraction", "safe_fraction", "risk_fraction"]
 report_focus = "Compare Euclidean vs projective alignment on productive progression and safe partial reprogramming windows."
+recommended_alignment = "projective_distance"
+
+[validation_tracks.human_fibroblast_oskm.recommendation]
+min_safe_fraction_gain = 0.05
+min_productive_fraction_gain = 0.05
+max_risk_fraction_increase = 0.03
+max_mean_l2_shift_increase = 0.10
+min_timepoint_safe_gains = 2
 
 [validation_tracks.mouse_transient_partial_oskm]
 title = "Mouse transient partial reprogramming validation"
@@ -29,3 +37,11 @@ timepoint_column = "phase"
 expected_timepoints = ["baseline", "day3_induction", "day6_chase"]
 primary_metrics = ["mean_l2_shift", "productive_fraction", "safe_fraction", "risk_fraction"]
 report_focus = "Assess whether projective alignment improves safe rejuvenation signals without inflating pluripotency-risk cohorts."
+recommended_alignment = "projective_distance"
+
+[validation_tracks.mouse_transient_partial_oskm.recommendation]
+min_safe_fraction_gain = 0.04
+min_productive_fraction_gain = 0.03
+max_risk_fraction_increase = 0.02
+max_mean_l2_shift_increase = 0.08
+min_timepoint_safe_gains = 1

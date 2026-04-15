@@ -116,6 +116,11 @@ def build_validation_benchmark_summary(
             fused_shift_rows=payload.get("fused_shift_rows", []),
         )
     timepoint_comparison = build_timepoint_comparison_rows(timepoint_summaries)
+    recommendation = build_alignment_recommendation(
+        track_config=track_config,
+        benchmark_rows=rows_sorted,
+        timepoint_comparison=timepoint_comparison,
+    )
     return {
         "track_name": validation_manifest.get("track_name"),
         "dataset_profile": validation_manifest.get("dataset_profile"),
@@ -127,6 +132,7 @@ def build_validation_benchmark_summary(
         "best_by_mean_l2_shift": best_run,
         "timepoint_summaries": timepoint_summaries,
         "timepoint_comparison": timepoint_comparison,
+        "recommendation": recommendation,
     }
 
 
@@ -165,3 +171,76 @@ def build_timepoint_comparison_rows(
                 }
             )
     return comparison_rows
+
+
+def build_alignment_recommendation(
+    *,
+    track_config: Dict[str, Any],
+    benchmark_rows: Sequence[Dict[str, Any]],
+    timepoint_comparison: Sequence[Dict[str, Any]],
+    baseline_label: str = "euclidean",
+    candidate_label: str = "projective",
+) -> Dict[str, Any]:
+    """Produce a track-level recommendation about alignment preference."""
+    recommendation_config = track_config.get("recommendation", {})
+    baseline_row = next((row for row in benchmark_rows if row.get("label") == baseline_label), None)
+    candidate_row = next((row for row in benchmark_rows if row.get("label") == candidate_label), None)
+    if baseline_row is None or candidate_row is None:
+        return {
+            "status": "unavailable",
+            "preferred_alignment": None,
+            "reason": "Required alignment runs were not both present.",
+        }
+
+    safe_gain = float(candidate_row["safe_fraction"]) - float(baseline_row["safe_fraction"])
+    productive_gain = float(candidate_row["productive_fraction"]) - float(
+        baseline_row["productive_fraction"]
+    )
+    risk_increase = float(candidate_row["risk_fraction"]) - float(baseline_row["risk_fraction"])
+    l2_increase = float(candidate_row["mean_l2_shift"]) - float(baseline_row["mean_l2_shift"])
+    timepoint_safe_gains = sum(
+        1
+        for row in timepoint_comparison
+        if row.get("label") == candidate_label and float(row.get("delta_safe_fraction", 0.0)) > 0
+    )
+
+    meets_positive = (
+        safe_gain >= float(recommendation_config.get("min_safe_fraction_gain", 0.0))
+        and productive_gain
+        >= float(recommendation_config.get("min_productive_fraction_gain", 0.0))
+        and risk_increase
+        <= float(recommendation_config.get("max_risk_fraction_increase", 0.0))
+        and l2_increase
+        <= float(recommendation_config.get("max_mean_l2_shift_increase", float("inf")))
+        and timepoint_safe_gains
+        >= int(recommendation_config.get("min_timepoint_safe_gains", 0))
+    )
+
+    if meets_positive:
+        status = "prefer_projective"
+        preferred_alignment = candidate_row.get("alignment_mode")
+        reason = "Projective alignment improved safe/productive behavior within track thresholds."
+    elif safe_gain > 0 and risk_increase <= float(
+        recommendation_config.get("max_risk_fraction_increase", 0.0)
+    ):
+        status = "mixed"
+        preferred_alignment = None
+        reason = "Projective alignment shows some safety gains, but not enough consistent improvement yet."
+    else:
+        status = "prefer_euclidean"
+        preferred_alignment = baseline_row.get("alignment_mode")
+        reason = "Projective alignment does not currently clear the track-specific safety/productivity thresholds."
+
+    return {
+        "status": status,
+        "preferred_alignment": preferred_alignment,
+        "reason": reason,
+        "metrics": {
+            "safe_fraction_gain": safe_gain,
+            "productive_fraction_gain": productive_gain,
+            "risk_fraction_increase": risk_increase,
+            "mean_l2_shift_increase": l2_increase,
+            "timepoint_safe_gains": timepoint_safe_gains,
+        },
+        "thresholds": recommendation_config,
+    }

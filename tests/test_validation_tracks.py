@@ -12,6 +12,7 @@ def test_resolve_validation_track_returns_named_track():
 
     assert track["dataset_profile"] == "gse242423_human_fibroblast_oskm"
     assert "expected_timepoints" in track
+    assert "recommendation" in track
 
 
 def test_build_validation_bundle_manifest_links_track_and_ablation_manifest():
