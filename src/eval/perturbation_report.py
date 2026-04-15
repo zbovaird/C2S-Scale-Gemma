@@ -84,3 +84,45 @@ def compute_shift_histogram(
         counts[bin_index] += 1
 
     return {"counts": counts, "bin_edges": edges}
+
+
+def summarize_risk_by_branch(
+    rows: Sequence[dict],
+    branch_key: str = "branch_label",
+    risk_key: str = "risk_score",
+) -> list[dict]:
+    """Aggregate risk scores by inferred branch label."""
+    grouped_values: dict[str, list[float]] = defaultdict(list)
+    for row in rows:
+        branch = str(row.get(branch_key, "unknown"))
+        risk_value = row.get(risk_key)
+        if risk_value is None:
+            continue
+        grouped_values[branch].append(float(risk_value))
+
+    summary_rows = []
+    for branch, values in grouped_values.items():
+        summary_rows.append(
+            {
+                "branch_label": branch,
+                "count": len(values),
+                "mean_risk_score": sum(values) / len(values),
+                "max_risk_score": max(values),
+            }
+        )
+    return sorted(summary_rows, key=lambda row: row["mean_risk_score"], reverse=True)
+
+
+def summarize_boolean_flag(
+    rows: Sequence[dict],
+    flag_key: str,
+) -> dict:
+    """Summarize a boolean overlay column."""
+    total_rows = len(rows)
+    true_count = sum(bool(row.get(flag_key)) for row in rows)
+    return {
+        "flag_key": flag_key,
+        "count": true_count,
+        "fraction": (true_count / total_rows) if total_rows else 0.0,
+        "n_cells": total_rows,
+    }

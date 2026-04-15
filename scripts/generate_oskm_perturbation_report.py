@@ -10,7 +10,12 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 
-from eval.perturbation_report import get_top_shift_rows, summarize_shift_by_category
+from eval.perturbation_report import (
+    get_top_shift_rows,
+    summarize_boolean_flag,
+    summarize_risk_by_branch,
+    summarize_shift_by_category,
+)
 
 
 logging.basicConfig(level=logging.INFO)
@@ -61,11 +66,65 @@ def plot_category_bars(summary_rows: list[dict], output_path: Path) -> None:
     plt.close()
 
 
+def plot_risk_by_branch(summary_rows: list[dict], output_path: Path) -> None:
+    if not summary_rows:
+        return
+    branches = [row["branch_label"] for row in summary_rows]
+    mean_risks = [row["mean_risk_score"] for row in summary_rows]
+
+    plt.figure(figsize=(9, 5))
+    plt.bar(branches, mean_risks, color="#8172B3")
+    plt.xticks(rotation=20, ha="right")
+    plt.ylabel("Mean risk score")
+    plt.title("Average risk score by inferred branch")
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=200, bbox_inches="tight")
+    plt.close()
+
+
+def plot_progress_vs_risk(rows: list[dict], output_path: Path) -> None:
+    filtered_rows = [
+        row
+        for row in rows
+        if row.get("progress_delta") is not None and row.get("risk_score") is not None
+    ]
+    if not filtered_rows:
+        return
+
+    x_values = [float(row["progress_delta"]) for row in filtered_rows]
+    y_values = [float(row["risk_score"]) for row in filtered_rows]
+
+    plt.figure(figsize=(8, 5))
+    plt.scatter(x_values, y_values, alpha=0.6, s=18, color="#937860")
+    plt.xlabel("Progress delta")
+    plt.ylabel("Risk score")
+    plt.title("Reprogramming progress vs risk proxy")
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=200, bbox_inches="tight")
+    plt.close()
+
+
+def plot_zone_counts(zone_summaries: list[dict], output_path: Path) -> None:
+    labels = [summary["flag_key"] for summary in zone_summaries]
+    counts = [summary["count"] for summary in zone_summaries]
+
+    plt.figure(figsize=(9, 5))
+    plt.bar(labels, counts, color=["#64B5CD", "#4C72B0", "#C44E52"])
+    plt.xticks(rotation=20, ha="right")
+    plt.ylabel("Cell count")
+    plt.title("Cells in partial-window / safe-zone / risk cohorts")
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=200, bbox_inches="tight")
+    plt.close()
+
+
 def write_markdown_report(
     output_path: Path,
     embedding_summary: dict,
     top_shift_rows: list[dict],
     category_summary: list[dict],
+    risk_summary: list[dict],
+    zone_summaries: list[dict],
     perturbation_summary: dict | None,
 ) -> None:
     lines = [
@@ -105,6 +164,19 @@ def write_markdown_report(
             f"median={row['median_shift']:.4f}, n={row['count']}"
         )
 
+    lines.extend(["", "## Risk by Branch", ""])
+    for row in risk_summary:
+        lines.append(
+            f"- {row['branch_label']}: mean_risk={row['mean_risk_score']:.4f}, "
+            f"max_risk={row['max_risk_score']:.4f}, n={row['count']}"
+        )
+
+    lines.extend(["", "## Partial Reprogramming and Safety Heuristics", ""])
+    for row in zone_summaries:
+        lines.append(
+            f"- {row['flag_key']}: count={row['count']}, fraction={row['fraction']:.4f}"
+        )
+
     lines.extend(
         [
             "",
@@ -113,6 +185,9 @@ def write_markdown_report(
             "- `shift_histogram.png`",
             "- `oskm_score_vs_shift.png`",
             "- `shift_by_cell_type.png`",
+            "- `risk_by_branch.png`",
+            "- `progress_vs_risk.png`",
+            "- `zone_counts.png`",
             "",
         ]
     )
@@ -155,16 +230,27 @@ def main() -> None:
     )
 
     category_summary = summarize_shift_by_category(fused_shift_rows, "cell_type")
+    risk_summary = summarize_risk_by_branch(fused_shift_rows)
+    zone_summaries = [
+        summarize_boolean_flag(fused_shift_rows, "partial_reprogramming_window"),
+        summarize_boolean_flag(fused_shift_rows, "longevity_safe_zone"),
+        summarize_boolean_flag(fused_shift_rows, "pluripotency_risk_flag"),
+    ]
     top_shift_rows = get_top_shift_rows(fused_shift_rows, top_n=15)
 
     plot_shift_histogram(fused_shift_rows, output_dir / "shift_histogram.png")
     plot_oskm_scatter(fused_shift_rows, output_dir / "oskm_score_vs_shift.png")
     plot_category_bars(category_summary, output_dir / "shift_by_cell_type.png")
+    plot_risk_by_branch(risk_summary, output_dir / "risk_by_branch.png")
+    plot_progress_vs_risk(fused_shift_rows, output_dir / "progress_vs_risk.png")
+    plot_zone_counts(zone_summaries, output_dir / "zone_counts.png")
     write_markdown_report(
         output_dir / "OSKM_PERTURBATION_REPORT.md",
         embedding_summary=embedding_summary,
         top_shift_rows=top_shift_rows,
         category_summary=category_summary,
+        risk_summary=risk_summary,
+        zone_summaries=zone_summaries,
         perturbation_summary=perturbation_summary,
     )
 
