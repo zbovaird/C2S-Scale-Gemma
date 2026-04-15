@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 
 from eval.perturbation_report import (
     get_top_shift_rows,
+    summarize_alignment_ablation,
     summarize_boolean_flag,
     summarize_risk_by_branch,
     summarize_shift_by_category,
@@ -144,6 +145,22 @@ def plot_marker_panel_scatter(rows: list[dict], output_path: Path) -> None:
     plt.close()
 
 
+def plot_alignment_ablation(summary_rows: list[dict], output_path: Path) -> None:
+    if not summary_rows:
+        return
+    labels = [row["label"] for row in summary_rows]
+    metric_values = [row["metric_value"] for row in summary_rows]
+
+    plt.figure(figsize=(9, 5))
+    plt.bar(labels, metric_values, color="#4C72B0")
+    plt.xticks(rotation=20, ha="right")
+    plt.ylabel("Mean fused embedding L2 shift")
+    plt.title("Alignment-mode ablation")
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=200, bbox_inches="tight")
+    plt.close()
+
+
 def write_markdown_report(
     output_path: Path,
     embedding_summary: dict,
@@ -152,6 +169,7 @@ def write_markdown_report(
     risk_summary: list[dict],
     zone_summaries: list[dict],
     marker_summary: dict[str, list[dict]],
+    ablation_summary: list[dict],
     overlay_summary: dict | None,
     perturbation_summary: dict | None,
 ) -> None:
@@ -247,6 +265,16 @@ def write_markdown_report(
             )
         lines.append("")
 
+    if ablation_summary:
+        lines.extend(["## Alignment Ablation", ""])
+        for row in ablation_summary:
+            lines.append(
+                f"- {row['label']} ({row['alignment_mode']}): "
+                f"{row['metric_key']}={row['metric_value']:.4f}, "
+                f"mean_cosine_similarity={row['mean_cosine_similarity']:.4f}"
+            )
+        lines.append("")
+
     lines.extend(
         [
             "",
@@ -259,6 +287,7 @@ def write_markdown_report(
             "- `progress_vs_risk.png`",
             "- `zone_counts.png`",
             "- `marker_panel_balance.png`",
+            "- `alignment_ablation.png`",
             "",
         ]
     )
@@ -285,6 +314,12 @@ def main() -> None:
         type=str,
         default=None,
         help="Output directory for report files (defaults to comparison dir)",
+    )
+    parser.add_argument(
+        "--ablation-comparison-dir",
+        action="append",
+        default=None,
+        help="Optional additional comparison directory to include in alignment ablations",
     )
     args = parser.parse_args()
 
@@ -322,6 +357,43 @@ def main() -> None:
         ),
     }
     top_shift_rows = get_top_shift_rows(fused_shift_rows, top_n=15)
+    ablation_runs = []
+    if overlay_summary is not None:
+        ablation_runs.append(
+            {
+                "label": comparison_dir.name,
+                "alignment_mode": overlay_summary.get("alignment", {}).get(
+                    "alignment_mode",
+                    "unknown",
+                ),
+                "dataset_profile": overlay_summary.get("dataset_profile"),
+                "embedding_summary": embedding_summary,
+            }
+        )
+    if args.ablation_comparison_dir:
+        for candidate_dir in args.ablation_comparison_dir:
+            candidate_path = Path(candidate_dir)
+            candidate_embedding_summary = load_json(
+                candidate_path / "embedding_shift_summary.json"
+            )
+            candidate_overlay_path = candidate_path / "reprogramming_overlay_summary.json"
+            candidate_overlay = (
+                load_json(candidate_overlay_path)
+                if candidate_overlay_path.exists()
+                else {}
+            )
+            ablation_runs.append(
+                {
+                    "label": candidate_path.name,
+                    "alignment_mode": candidate_overlay.get("alignment", {}).get(
+                        "alignment_mode",
+                        "unknown",
+                    ),
+                    "dataset_profile": candidate_overlay.get("dataset_profile"),
+                    "embedding_summary": candidate_embedding_summary,
+                }
+            )
+    ablation_summary = summarize_alignment_ablation(ablation_runs)
 
     plot_shift_histogram(fused_shift_rows, output_dir / "shift_histogram.png")
     plot_oskm_scatter(fused_shift_rows, output_dir / "oskm_score_vs_shift.png")
@@ -330,6 +402,7 @@ def main() -> None:
     plot_progress_vs_risk(fused_shift_rows, output_dir / "progress_vs_risk.png")
     plot_zone_counts(zone_summaries, output_dir / "zone_counts.png")
     plot_marker_panel_scatter(fused_shift_rows, output_dir / "marker_panel_balance.png")
+    plot_alignment_ablation(ablation_summary, output_dir / "alignment_ablation.png")
     write_markdown_report(
         output_dir / "OSKM_PERTURBATION_REPORT.md",
         embedding_summary=embedding_summary,
@@ -338,6 +411,7 @@ def main() -> None:
         risk_summary=risk_summary,
         zone_summaries=zone_summaries,
         marker_summary=marker_summary,
+        ablation_summary=ablation_summary,
         overlay_summary=overlay_summary,
         perturbation_summary=perturbation_summary,
     )

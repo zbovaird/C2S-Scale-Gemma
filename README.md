@@ -348,6 +348,14 @@ uv run scripts/generate_oskm_perturbation_report.py \
   --perturbation-summary artifacts/oskm_perturbation/oskm_overexpress_summary.json
 ```
 
+Add alignment ablations by passing extra comparison runs:
+
+```bash
+uv run scripts/generate_oskm_perturbation_report.py \
+  --comparison-dir artifacts/oskm_embedding_comparison_projective \
+  --ablation-comparison-dir artifacts/oskm_embedding_comparison_euclidean
+```
+
 This produces:
 
 - `shift_histogram.png`
@@ -357,6 +365,7 @@ This produces:
 - `progress_vs_risk.png`
 - `zone_counts.png`
 - `marker_panel_balance.png`
+- `alignment_ablation.png`
 - `OSKM_PERTURBATION_REPORT.md`
 
 ## 🧪 Testing

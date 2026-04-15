@@ -60,7 +60,7 @@ Transform the C2S-Scale-Gemma hybrid architecture into a specialized tool for mo
 ## Updated Remaining Build
 
 1. Expand the dataset-profile layer with dataset-specific marker panels, reference presets, and manifests for real OKSM time-course datasets.
-2. Harden and validate the curvature-aware alignment mode on real OKSM datasets, including ablations against the Euclidean baseline.
+2. Harden and validate the curvature-aware alignment mode on real OKSM datasets, including reportable ablations against the Euclidean baseline.
 3. Add dataset manifests and validation runs for fibroblast-to-iPSC / transient-OSKM studies.
 4. Expand visuals from static QA plots into trajectory-centric hyperbolic views and a lightweight interactive explorer.
 5. Tighten documentation around config profiles, benchmark datasets, and expected interpretation limits.

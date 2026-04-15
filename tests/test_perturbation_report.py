@@ -1,6 +1,7 @@
 from eval.perturbation_report import (
     compute_shift_histogram,
     get_top_shift_rows,
+    summarize_alignment_ablation,
     summarize_boolean_flag,
     summarize_risk_by_branch,
     summarize_shift_by_category,
@@ -79,3 +80,33 @@ def test_summarize_value_by_category_aggregates_generic_metric():
 
     assert summary[0]["category"] == "productive"
     assert summary[0]["mean_value"] == 0.5
+
+
+def test_summarize_alignment_ablation_orders_by_metric_value():
+    summary = summarize_alignment_ablation(
+        [
+            {
+                "label": "projective",
+                "alignment_mode": "projective_distance",
+                "embedding_summary": {
+                    "fused_embeddings": {
+                        "mean_l2_shift": 0.4,
+                        "mean_cosine_similarity": 0.8,
+                    }
+                },
+            },
+            {
+                "label": "euclidean",
+                "alignment_mode": "euclidean_cosine",
+                "embedding_summary": {
+                    "fused_embeddings": {
+                        "mean_l2_shift": 0.7,
+                        "mean_cosine_similarity": 0.6,
+                    }
+                },
+            },
+        ]
+    )
+
+    assert [row["label"] for row in summary] == ["projective", "euclidean"]
+    assert summary[0]["alignment_mode"] == "projective_distance"

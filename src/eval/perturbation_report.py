@@ -153,3 +153,30 @@ def summarize_boolean_flag(
         "fraction": (true_count / total_rows) if total_rows else 0.0,
         "n_cells": total_rows,
     }
+
+
+def summarize_alignment_ablation(
+    run_summaries: Sequence[dict],
+    representation_key: str = "fused_embeddings",
+    metric_key: str = "mean_l2_shift",
+) -> list[dict]:
+    """Summarize comparable embedding metrics across multiple alignment runs."""
+    rows = []
+    for summary in run_summaries:
+        embedding_summary = summary.get("embedding_summary", {})
+        representation_summary = embedding_summary.get(representation_key)
+        if not representation_summary:
+            continue
+        rows.append(
+            {
+                "label": str(summary.get("label", "unknown")),
+                "alignment_mode": str(summary.get("alignment_mode", "unknown")),
+                "dataset_profile": summary.get("dataset_profile"),
+                "metric_key": metric_key,
+                "metric_value": float(representation_summary.get(metric_key, 0.0)),
+                "mean_cosine_similarity": float(
+                    representation_summary.get("mean_cosine_similarity", 0.0)
+                ),
+            }
+        )
+    return sorted(rows, key=lambda row: row["metric_value"])

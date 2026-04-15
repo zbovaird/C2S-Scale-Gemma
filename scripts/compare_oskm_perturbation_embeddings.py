@@ -350,6 +350,17 @@ def main() -> None:
                 "zone_summary": zone_summary,
                 "dataset_profile": config.get("reprogramming", {}).get("dataset_profile"),
                 "dataset_manifest": dataset_manifest,
+                "alignment": {
+                    "alignment_mode": config.get("fusion", {}).get(
+                        "alignment_mode",
+                        "euclidean_cosine",
+                    ),
+                    "alignment_dim": config.get("fusion", {}).get("alignment_dim"),
+                    "text_projection_type": config.get("fusion", {}).get(
+                        "text_projection_type",
+                        "learned",
+                    ),
+                },
                 "reference_labels": {
                     "somatic_labels": somatic_labels,
                     "pluripotent_labels": pluripotent_labels,
