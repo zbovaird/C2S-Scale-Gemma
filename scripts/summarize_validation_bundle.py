@@ -40,6 +40,19 @@ def write_markdown_summary(output_path: Path, summary: dict) -> None:
             f"safe_fraction={row['safe_fraction']:.4f}, "
             f"risk_fraction={row['risk_fraction']:.4f}"
         )
+    for label, rows in summary.get("timepoint_summaries", {}).items():
+        if not rows:
+            continue
+        lines.extend(["", f"## Timepoint Progression: {label}", ""])
+        for row in rows:
+            lines.append(
+                f"- {row['timepoint']}: "
+                f"mean_l2_shift={row['mean_l2_shift']:.4f}, "
+                f"mean_progress_delta={row['mean_progress_delta']:.4f}, "
+                f"productive_fraction={row['productive_fraction']:.4f}, "
+                f"safe_fraction={row['safe_fraction']:.4f}, "
+                f"risk_fraction={row['risk_fraction']:.4f}"
+            )
     output_path.write_text("\n".join(lines), encoding="utf-8")
 
 
@@ -82,6 +95,9 @@ def main() -> None:
                 ),
                 "overlay_summary": load_json_file(
                     output_dir_path / "reprogramming_overlay_summary.json"
+                ),
+                "fused_shift_rows": load_json_file(
+                    output_dir_path / "fused_embedding_shift_frame.json"
                 ),
             }
         )

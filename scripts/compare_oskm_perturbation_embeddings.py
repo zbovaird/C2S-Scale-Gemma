@@ -120,11 +120,18 @@ def create_dataset(
     tokenizer: Any,
     config: Dict[str, Any],
     device: torch.device,
+    dataset_manifest: Dict[str, Any] | None = None,
 ) -> Cell2SentenceDataset:
     data_config = config.get("data", {})
     oskm_config = data_config.get("oskm", {})
     reprogramming_config = config.get("reprogramming", {})
     marker_panels = reprogramming_config.get("marker_panels", {})
+    metadata_columns = []
+    if dataset_manifest:
+        for key in ("timepoint_column", "batch_column", "donor_column", "age_column"):
+            value = dataset_manifest.get(key)
+            if value:
+                metadata_columns.append(str(value))
     return Cell2SentenceDataset(
         data_path=data_path,
         tokenizer=tokenizer,
@@ -134,6 +141,7 @@ def create_dataset(
         oskm_anchor_mode=oskm_config.get("anchor_mode", "none"),
         oskm_species=oskm_config.get("species", "human"),
         marker_panels=marker_panels,
+        metadata_columns=metadata_columns,
     )
 
 
@@ -228,8 +236,20 @@ def run_embedding_comparison(
     )
     trainer.eval()
 
-    baseline_dataset = create_dataset(baseline_data_path, tokenizer, config, device)
-    perturbed_dataset = create_dataset(perturbed_data_path, tokenizer, config, device)
+    baseline_dataset = create_dataset(
+        baseline_data_path,
+        tokenizer,
+        config,
+        device,
+        dataset_manifest=dataset_manifest,
+    )
+    perturbed_dataset = create_dataset(
+        perturbed_data_path,
+        tokenizer,
+        config,
+        device,
+        dataset_manifest=dataset_manifest,
+    )
     if len(baseline_dataset) != len(perturbed_dataset):
         raise ValueError("Baseline and perturbed datasets must contain the same number of cells.")
     baseline_loader = create_dataloader(baseline_dataset, tokenizer, batch_size)
@@ -273,6 +293,15 @@ def run_embedding_comparison(
             0.0,
         ),
     }
+    if dataset_manifest is not None:
+        for key in ("timepoint_column", "batch_column", "donor_column", "age_column"):
+            column_name = dataset_manifest.get(key)
+            if column_name:
+                metadata[str(column_name)] = _get_column_values(
+                    baseline_dataset,
+                    str(column_name),
+                    "unknown",
+                )
     somatic_labels = _resolve_reference_labels(
         config, somatic_labels_arg, "somatic_labels", DEFAULT_SOMATIC_LABELS
     )

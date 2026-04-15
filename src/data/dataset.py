@@ -51,6 +51,7 @@ class CellSentenceDataset(Dataset):
         oskm_anchor_mode: str = "none",
         oskm_species: str = "human",
         marker_panels: Optional[Dict[str, List[str]]] = None,
+        metadata_columns: Optional[List[str]] = None,
     ):
         """
         Initialize dataset.
@@ -68,6 +69,7 @@ class CellSentenceDataset(Dataset):
         self.oskm_anchor_mode = oskm_anchor_mode
         self.oskm_species = oskm_species
         self.marker_panels = marker_panels or {}
+        self.metadata_columns = metadata_columns or []
         
         # Reuse provided tokenizer when scripts already loaded one.
         if tokenizer is not None:
@@ -171,6 +173,12 @@ class CellSentenceDataset(Dataset):
             'oskm_score': oskm_scores,
             'oskm_present_symbols': oskm_present_symbols,
         })
+
+        for column_name in self.metadata_columns:
+            if column_name in df.columns:
+                continue
+            if column_name in adata.obs.columns:
+                df[column_name] = adata.obs[column_name].tolist()
 
         for panel_name, scores in panel_scores.items():
             df[f"{panel_name}_score"] = scores

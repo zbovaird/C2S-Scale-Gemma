@@ -52,6 +52,53 @@ def build_validation_benchmark_rows(
     return rows
 
 
+def build_timepoint_progression_rows(
+    *,
+    track_config: Dict[str, Any],
+    fused_shift_rows: Sequence[Dict[str, Any]],
+) -> list[dict]:
+    """Aggregate perturbation/trajectory summaries by configured timepoint."""
+    timepoint_column = track_config.get("timepoint_column")
+    if not timepoint_column:
+        return []
+
+    grouped_rows: dict[str, list[Dict[str, Any]]] = {}
+    for row in fused_shift_rows:
+        timepoint = str(row.get(timepoint_column, "unknown"))
+        grouped_rows.setdefault(timepoint, []).append(row)
+
+    expected_timepoints = [str(value) for value in track_config.get("expected_timepoints", [])]
+    ordered_timepoints = expected_timepoints + sorted(
+        timepoint for timepoint in grouped_rows.keys() if timepoint not in expected_timepoints
+    )
+
+    summary_rows = []
+    for timepoint in ordered_timepoints:
+        rows = grouped_rows.get(timepoint)
+        if not rows:
+            continue
+        n_cells = len(rows)
+        productive_count = sum(
+            1 for row in rows if str(row.get("branch_label", "")) == "productive"
+        )
+        safe_count = sum(bool(row.get("longevity_safe_zone")) for row in rows)
+        risk_count = sum(bool(row.get("pluripotency_risk_flag")) for row in rows)
+        mean_l2_shift = sum(float(row.get("l2_shift", 0.0)) for row in rows) / n_cells
+        mean_progress_delta = sum(float(row.get("progress_delta", 0.0)) for row in rows) / n_cells
+        summary_rows.append(
+            {
+                "timepoint": timepoint,
+                "n_cells": n_cells,
+                "mean_l2_shift": mean_l2_shift,
+                "mean_progress_delta": mean_progress_delta,
+                "productive_fraction": productive_count / n_cells,
+                "safe_fraction": safe_count / n_cells,
+                "risk_fraction": risk_count / n_cells,
+            }
+        )
+    return summary_rows
+
+
 def build_validation_benchmark_summary(
     validation_manifest: Dict[str, Any],
     run_payloads: Sequence[Dict[str, Any]],
@@ -60,6 +107,14 @@ def build_validation_benchmark_summary(
     rows = build_validation_benchmark_rows(validation_manifest, run_payloads)
     rows_sorted = sorted(rows, key=lambda row: row["mean_l2_shift"])
     best_run = rows_sorted[0] if rows_sorted else None
+    track_config = validation_manifest.get("track", {})
+    timepoint_summaries = {}
+    for payload in run_payloads:
+        label = str(payload.get("label", "unknown"))
+        timepoint_summaries[label] = build_timepoint_progression_rows(
+            track_config=track_config,
+            fused_shift_rows=payload.get("fused_shift_rows", []),
+        )
     return {
         "track_name": validation_manifest.get("track_name"),
         "dataset_profile": validation_manifest.get("dataset_profile"),
@@ -69,4 +124,5 @@ def build_validation_benchmark_summary(
         ),
         "runs": rows_sorted,
         "best_by_mean_l2_shift": best_run,
+        "timepoint_summaries": timepoint_summaries,
     }

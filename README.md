@@ -403,6 +403,8 @@ uv run scripts/summarize_validation_bundle.py \
 
 This produces `validation_benchmark_summary.json` and `VALIDATION_BENCHMARK.md` for the named study.
 
+When the study track declares a `timepoint_column`, the validation benchmark also includes per-timepoint progression summaries so Euclidean and projective runs can be compared by stage, not just by aggregate shift/safety metrics.
+
 This produces:
 
 - `shift_histogram.png`

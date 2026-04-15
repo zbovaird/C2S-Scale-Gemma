@@ -1,6 +1,7 @@
 from eval.validation_summary import (
     build_validation_benchmark_rows,
     build_validation_benchmark_summary,
+    build_timepoint_progression_rows,
 )
 
 
@@ -62,6 +63,7 @@ def test_build_validation_benchmark_summary_picks_lowest_shift_run():
                     }
                 },
                 "overlay_summary": {"branch_summary": {}, "zone_summary": {}},
+                "fused_shift_rows": [],
             },
             {
                 "label": "projective",
@@ -74,8 +76,40 @@ def test_build_validation_benchmark_summary_picks_lowest_shift_run():
                     }
                 },
                 "overlay_summary": {"branch_summary": {}, "zone_summary": {}},
+                "fused_shift_rows": [],
             },
         ],
     )
 
     assert summary["best_by_mean_l2_shift"]["label"] == "projective"
+
+
+def test_build_timepoint_progression_rows_uses_expected_timepoint_order():
+    rows = build_timepoint_progression_rows(
+        track_config={
+            "timepoint_column": "timepoint",
+            "expected_timepoints": ["D0", "D2", "D4"],
+        },
+        fused_shift_rows=[
+            {
+                "timepoint": "D2",
+                "l2_shift": 0.4,
+                "progress_delta": 0.2,
+                "branch_label": "productive",
+                "longevity_safe_zone": True,
+                "pluripotency_risk_flag": False,
+            },
+            {
+                "timepoint": "D0",
+                "l2_shift": 0.1,
+                "progress_delta": 0.0,
+                "branch_label": "alternative",
+                "longevity_safe_zone": False,
+                "pluripotency_risk_flag": False,
+            },
+        ],
+    )
+
+    assert [row["timepoint"] for row in rows] == ["D0", "D2"]
+    assert rows[1]["productive_fraction"] == 1.0
+    assert rows[1]["safe_fraction"] == 1.0
