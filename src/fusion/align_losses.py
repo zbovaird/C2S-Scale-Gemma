@@ -11,6 +11,13 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+try:
+    from uhg.projective import ProjectiveUHG
+except Exception:  # pragma: no cover - optional runtime dependency
+    ProjectiveUHG = None
+
+from uhg_adapters.euclid_to_uhg import EuclideanToUHG
+
 logger = logging.getLogger(__name__)
 
 
@@ -29,6 +36,11 @@ class InfoNCELoss(nn.Module):
         num_hard_negatives: int = 5,
         margin: float = 0.5,
         hard_negative_weight: float = 1.0,
+        alignment_mode: str = "euclidean_cosine",
+        text_dim: Optional[int] = None,
+        graph_dim: Optional[int] = None,
+        shared_dim: Optional[int] = None,
+        text_projection_type: str = "learned",
     ):
         """
         Initialize InfoNCE loss.
@@ -46,8 +58,26 @@ class InfoNCELoss(nn.Module):
         self.num_hard_negatives = num_hard_negatives
         self.margin = margin
         self.hard_negative_weight = hard_negative_weight
+        self.alignment_mode = alignment_mode
+        self.text_dim = text_dim
+        self.graph_dim = graph_dim
+        self.shared_dim = shared_dim
+        self.text_projection_type = text_projection_type
+        self.requires_hyperbolic_graph_space = alignment_mode in {
+            "projective_distance",
+            "hyperbolic_distance",
+            "projective_uhg",
+        }
+        self.uhg = ProjectiveUHG() if ProjectiveUHG is not None else None
+        self.text_to_geometry: Optional[nn.Module] = None
+        self.graph_to_geometry: Optional[nn.Module] = None
         
-        logger.info(f"Initialized InfoNCE loss: temp={temperature}, hard_neg={hard_negative_mining}")
+        logger.info(
+            "Initialized InfoNCE loss: temp=%s, hard_neg=%s, mode=%s",
+            temperature,
+            hard_negative_mining,
+            alignment_mode,
+        )
     
     def forward(
         self,
@@ -69,13 +99,8 @@ class InfoNCELoss(nn.Module):
             Dictionary containing loss components
         """
         batch_size = text_embeddings.size(0)
-        
-        # Normalize embeddings
-        text_embeddings = F.normalize(text_embeddings, p=2, dim=1)
-        graph_embeddings = F.normalize(graph_embeddings, p=2, dim=1)
-        
-        # Compute similarity matrix
-        similarity_matrix = torch.matmul(text_embeddings, graph_embeddings.t()) / self.temperature
+
+        similarity_matrix = self._compute_similarity_matrix(text_embeddings, graph_embeddings)
         
         # Create positive mask (diagonal)
         positive_mask = torch.eye(batch_size, device=text_embeddings.device)
@@ -97,8 +122,76 @@ class InfoNCELoss(nn.Module):
             'total_loss': total_loss,
             'infonce_loss': infonce_loss,
             'hard_negative_loss': hard_negative_loss,
-            'similarity_matrix': similarity_matrix
+            'similarity_matrix': similarity_matrix,
+            'alignment_mode': self.alignment_mode,
         }
+
+    def _compute_similarity_matrix(
+        self,
+        text_embeddings: torch.Tensor,
+        graph_embeddings: torch.Tensor,
+    ) -> torch.Tensor:
+        if self.alignment_mode == "euclidean_cosine":
+            text_embeddings = F.normalize(text_embeddings, p=2, dim=1)
+            graph_embeddings = F.normalize(graph_embeddings, p=2, dim=1)
+            return torch.matmul(text_embeddings, graph_embeddings.t()) / self.temperature
+
+        if self.alignment_mode in {"projective_distance", "hyperbolic_distance", "projective_uhg"}:
+            text_geometry, graph_geometry = self._project_to_geometry_space(
+                text_embeddings,
+                graph_embeddings,
+            )
+            distances = self._pairwise_geometry_distance(text_geometry, graph_geometry)
+            return -distances / self.temperature
+
+        raise ValueError(f"Unknown alignment_mode: {self.alignment_mode}")
+
+    def _project_to_geometry_space(
+        self,
+        text_embeddings: torch.Tensor,
+        graph_embeddings: torch.Tensor,
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
+        if self.text_to_geometry is None:
+            inferred_text_dim = self.text_dim or text_embeddings.size(-1)
+            inferred_graph_dim = self.graph_dim or graph_embeddings.size(-1)
+            inferred_shared_dim = self.shared_dim or inferred_graph_dim
+            self.text_to_geometry = EuclideanToUHG(
+                input_dim=inferred_text_dim,
+                output_dim=inferred_shared_dim,
+                projection_type=self.text_projection_type,
+            ).to(text_embeddings.device)
+            if inferred_graph_dim != inferred_shared_dim:
+                self.graph_to_geometry = nn.Linear(
+                    inferred_graph_dim,
+                    inferred_shared_dim,
+                ).to(graph_embeddings.device)
+
+        projected_text = self.text_to_geometry(text_embeddings)
+        projected_graph = (
+            self.graph_to_geometry(graph_embeddings)
+            if self.graph_to_geometry is not None
+            else graph_embeddings
+        )
+        return projected_text, projected_graph
+
+    def _pairwise_geometry_distance(
+        self,
+        text_embeddings: torch.Tensor,
+        graph_embeddings: torch.Tensor,
+    ) -> torch.Tensor:
+        if self.uhg is None:
+            return torch.cdist(text_embeddings, graph_embeddings, p=2)
+
+        batch_size = text_embeddings.size(0)
+        distances = torch.zeros(
+            batch_size,
+            graph_embeddings.size(0),
+            device=text_embeddings.device,
+        )
+        for i in range(batch_size):
+            for j in range(graph_embeddings.size(0)):
+                distances[i, j] = self.uhg.distance(text_embeddings[i], graph_embeddings[j])
+        return distances
     
     def _compute_infonce_loss(
         self,

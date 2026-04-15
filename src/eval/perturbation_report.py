@@ -44,6 +44,33 @@ def summarize_shift_by_category(
     return sorted(summary_rows, key=lambda row: row["mean_shift"], reverse=True)
 
 
+def summarize_value_by_category(
+    rows: Sequence[dict],
+    category_key: str,
+    value_key: str,
+) -> list[dict]:
+    """Aggregate any numeric value by category."""
+    grouped_values: dict[str, list[float]] = defaultdict(list)
+    for row in rows:
+        category = str(row.get(category_key, "unknown"))
+        value = row.get(value_key)
+        if value is None:
+            continue
+        grouped_values[category].append(float(value))
+
+    summary_rows = []
+    for category, values in grouped_values.items():
+        summary_rows.append(
+            {
+                "category": category,
+                "count": len(values),
+                "mean_value": sum(values) / len(values),
+                "max_value": max(values),
+            }
+        )
+    return sorted(summary_rows, key=lambda row: row["mean_value"], reverse=True)
+
+
 def get_top_shift_rows(
     rows: Sequence[dict],
     top_n: int = 20,

@@ -529,6 +529,15 @@ def main():
             contrastive_loss=InfoNCELoss(
                 temperature=config["training"]["contrastive_temperature"],
                 hard_negative_weight=config["training"]["hard_negative_weight"],
+                alignment_mode=config.get("fusion", {}).get(
+                    "alignment_mode",
+                    "euclidean_cosine",
+                ),
+                shared_dim=config.get("fusion", {}).get("alignment_dim"),
+                text_projection_type=config.get("fusion", {}).get(
+                    "text_projection_type",
+                    "learned",
+                ),
             ),
             device=device,
         )

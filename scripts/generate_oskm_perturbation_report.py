@@ -15,6 +15,7 @@ from eval.perturbation_report import (
     summarize_boolean_flag,
     summarize_risk_by_branch,
     summarize_shift_by_category,
+    summarize_value_by_category,
 )
 
 
@@ -118,6 +119,31 @@ def plot_zone_counts(zone_summaries: list[dict], output_path: Path) -> None:
     plt.close()
 
 
+def plot_marker_panel_scatter(rows: list[dict], output_path: Path) -> None:
+    filtered_rows = [
+        row
+        for row in rows
+        if row.get("rejuvenation_score") is not None
+        and row.get("pluripotency_marker_score") is not None
+    ]
+    if not filtered_rows:
+        return
+
+    x_values = [float(row["rejuvenation_score"]) for row in filtered_rows]
+    y_values = [float(row["pluripotency_marker_score"]) for row in filtered_rows]
+    colors = [float(row.get("risk_score", 0.0) or 0.0) for row in filtered_rows]
+
+    plt.figure(figsize=(8, 5))
+    plt.scatter(x_values, y_values, c=colors, cmap="viridis", alpha=0.7, s=20)
+    plt.xlabel("Rejuvenation panel score")
+    plt.ylabel("Pluripotency-risk marker score")
+    plt.title("Marker panel balance across perturbed cells")
+    plt.colorbar(label="Risk score")
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=200, bbox_inches="tight")
+    plt.close()
+
+
 def write_markdown_report(
     output_path: Path,
     embedding_summary: dict,
@@ -125,6 +151,8 @@ def write_markdown_report(
     category_summary: list[dict],
     risk_summary: list[dict],
     zone_summaries: list[dict],
+    marker_summary: dict[str, list[dict]],
+    overlay_summary: dict | None,
     perturbation_summary: dict | None,
 ) -> None:
     lines = [
@@ -148,6 +176,38 @@ def write_markdown_report(
 
     if perturbation_summary is not None:
         lines.extend(["## Perturbation Metadata", "", "```json", json.dumps(perturbation_summary, indent=2), "```", ""])
+
+    if overlay_summary is not None:
+        lines.extend(
+            [
+                "## Reprogramming Heuristic Profile",
+                "",
+                "### Dataset profile",
+                "",
+                "```json",
+                json.dumps(
+                    {
+                        "dataset_profile": overlay_summary.get("dataset_profile"),
+                        "dataset_manifest": overlay_summary.get("dataset_manifest"),
+                    },
+                    indent=2,
+                ),
+                "```",
+                "",
+                "### Reference labels",
+                "",
+                "```json",
+                json.dumps(overlay_summary.get("reference_labels", {}), indent=2),
+                "```",
+                "",
+                "### Window profile",
+                "",
+                "```json",
+                json.dumps(overlay_summary.get("window_profile", {}), indent=2),
+                "```",
+                "",
+            ]
+        )
 
     lines.extend(["## Top Shifted Cells", ""])
     for row in top_shift_rows:
@@ -177,6 +237,16 @@ def write_markdown_report(
             f"- {row['flag_key']}: count={row['count']}, fraction={row['fraction']:.4f}"
         )
 
+    lines.extend(["", "## Marker Panel Summary", ""])
+    for summary_name, rows in marker_summary.items():
+        lines.append(f"### {summary_name}")
+        for row in rows:
+            lines.append(
+                f"- {row['category']}: mean={row['mean_value']:.4f}, "
+                f"max={row['max_value']:.4f}, n={row['count']}"
+            )
+        lines.append("")
+
     lines.extend(
         [
             "",
@@ -188,6 +258,7 @@ def write_markdown_report(
             "- `risk_by_branch.png`",
             "- `progress_vs_risk.png`",
             "- `zone_counts.png`",
+            "- `marker_panel_balance.png`",
             "",
         ]
     )
@@ -223,6 +294,8 @@ def main() -> None:
 
     embedding_summary = load_json(comparison_dir / "embedding_shift_summary.json")
     fused_shift_rows = load_json(comparison_dir / "fused_embedding_shift_frame.json")
+    overlay_summary_path = comparison_dir / "reprogramming_overlay_summary.json"
+    overlay_summary = load_json(overlay_summary_path) if overlay_summary_path.exists() else None
     perturbation_summary = (
         load_json(Path(args.perturbation_summary))
         if args.perturbation_summary is not None
@@ -236,6 +309,18 @@ def main() -> None:
         summarize_boolean_flag(fused_shift_rows, "longevity_safe_zone"),
         summarize_boolean_flag(fused_shift_rows, "pluripotency_risk_flag"),
     ]
+    marker_summary = {
+        "rejuvenation_by_branch": summarize_value_by_category(
+            fused_shift_rows,
+            "branch_label",
+            "rejuvenation_score",
+        ),
+        "pluripotency_markers_by_branch": summarize_value_by_category(
+            fused_shift_rows,
+            "branch_label",
+            "pluripotency_marker_score",
+        ),
+    }
     top_shift_rows = get_top_shift_rows(fused_shift_rows, top_n=15)
 
     plot_shift_histogram(fused_shift_rows, output_dir / "shift_histogram.png")
@@ -244,6 +329,7 @@ def main() -> None:
     plot_risk_by_branch(risk_summary, output_dir / "risk_by_branch.png")
     plot_progress_vs_risk(fused_shift_rows, output_dir / "progress_vs_risk.png")
     plot_zone_counts(zone_summaries, output_dir / "zone_counts.png")
+    plot_marker_panel_scatter(fused_shift_rows, output_dir / "marker_panel_balance.png")
     write_markdown_report(
         output_dir / "OSKM_PERTURBATION_REPORT.md",
         embedding_summary=embedding_summary,
@@ -251,6 +337,8 @@ def main() -> None:
         category_summary=category_summary,
         risk_summary=risk_summary,
         zone_summaries=zone_summaries,
+        marker_summary=marker_summary,
+        overlay_summary=overlay_summary,
         perturbation_summary=perturbation_summary,
     )
 

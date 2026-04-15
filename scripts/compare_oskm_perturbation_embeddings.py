@@ -27,6 +27,7 @@ from eval.reprogramming_metrics import (
     summarize_branch_counts,
     summarize_zone_counts,
 )
+from eval.reprogramming_profiles import resolve_dataset_profile
 from fusion.align_losses import InfoNCELoss
 from fusion.trainer import DualEncoderTrainer
 from fusion.heads import FusionHead
@@ -122,6 +123,8 @@ def create_dataset(
 ) -> Cell2SentenceDataset:
     data_config = config.get("data", {})
     oskm_config = data_config.get("oskm", {})
+    reprogramming_config = config.get("reprogramming", {})
+    marker_panels = reprogramming_config.get("marker_panels", {})
     return Cell2SentenceDataset(
         data_path=data_path,
         tokenizer=tokenizer,
@@ -130,6 +133,7 @@ def create_dataset(
         top_genes=data_config.get("top_genes", 1000),
         oskm_anchor_mode=oskm_config.get("anchor_mode", "none"),
         oskm_species=oskm_config.get("species", "human"),
+        marker_panels=marker_panels,
     )
 
 
@@ -157,6 +161,24 @@ def _parse_label_list(raw_value: str | None, default_values: tuple[str, ...]) ->
     return [item.strip() for item in raw_value.split(",") if item.strip()]
 
 
+def _resolve_reference_labels(
+    config: Dict[str, Any],
+    cli_value: str | None,
+    config_key: str,
+    defaults: tuple[str, ...],
+) -> list[str]:
+    if cli_value is not None:
+        return _parse_label_list(cli_value, defaults)
+    configured = config.get("reprogramming", {}).get("references", {}).get(config_key)
+    if configured:
+        return [str(value).strip() for value in configured if str(value).strip()]
+    return list(defaults)
+
+
+def _resolve_window_profile(config: Dict[str, Any]) -> Dict[str, Any]:
+    return dict(config.get("reprogramming", {}).get("window_profile", {}))
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Compare baseline vs perturbed embeddings")
     parser.add_argument("--config", type=str, required=True, help="Path to TOML config")
@@ -171,20 +193,37 @@ def main() -> None:
     )
     parser.add_argument("--batch-size", type=int, default=8, help="Embedding extraction batch size")
     parser.add_argument(
+        "--dataset-profile",
+        type=str,
+        default=None,
+        help="Optional named dataset profile from configs/reprogramming_profiles.toml",
+    )
+    parser.add_argument(
+        "--dataset-profile-config",
+        type=str,
+        default="configs/reprogramming_profiles.toml",
+        help="Path to the dataset profile registry",
+    )
+    parser.add_argument(
         "--somatic-labels",
         type=str,
-        default=",".join(DEFAULT_SOMATIC_LABELS),
+        default=None,
         help="Comma-separated cell_type labels defining the somatic reference",
     )
     parser.add_argument(
         "--pluripotent-labels",
         type=str,
-        default=",".join(DEFAULT_PLURIPOTENT_LABELS),
+        default=None,
         help="Comma-separated cell_type labels defining the pluripotent reference",
     )
     args = parser.parse_args()
 
     config = load_config(args.config)
+    config, dataset_manifest = resolve_dataset_profile(
+        config,
+        profile_name=args.dataset_profile,
+        profile_config_path=args.dataset_profile_config,
+    )
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -198,7 +237,18 @@ def main() -> None:
         hgnn_encoder=hgnn_encoder,
         text_model=lora_adapter,
         fusion_head=fusion_head,
-        contrastive_loss=InfoNCELoss(hard_negative_mining=False),
+        contrastive_loss=InfoNCELoss(
+            hard_negative_mining=False,
+            alignment_mode=config.get("fusion", {}).get(
+                "alignment_mode",
+                "euclidean_cosine",
+            ),
+            shared_dim=config.get("fusion", {}).get("alignment_dim"),
+            text_projection_type=config.get("fusion", {}).get(
+                "text_projection_type",
+                "learned",
+            ),
+        ),
         device=device,
         config=config,
     )
@@ -228,7 +278,34 @@ def main() -> None:
         "cell_type": baseline_dataset.cell_data["cell_type"].tolist(),
         "baseline_oskm_score": _get_column_values(baseline_dataset, "oskm_score", 0.0),
         "perturbed_oskm_score": _get_column_values(perturbed_dataset, "oskm_score", 0.0),
+        "baseline_rejuvenation_score": _get_column_values(
+            baseline_dataset,
+            "rejuvenation_score",
+            0.0,
+        ),
+        "perturbed_rejuvenation_score": _get_column_values(
+            perturbed_dataset,
+            "rejuvenation_score",
+            0.0,
+        ),
+        "baseline_pluripotency_marker_score": _get_column_values(
+            baseline_dataset,
+            "pluripotency_risk_score",
+            0.0,
+        ),
+        "perturbed_pluripotency_marker_score": _get_column_values(
+            perturbed_dataset,
+            "pluripotency_risk_score",
+            0.0,
+        ),
     }
+    somatic_labels = _resolve_reference_labels(
+        config, args.somatic_labels, "somatic_labels", DEFAULT_SOMATIC_LABELS
+    )
+    pluripotent_labels = _resolve_reference_labels(
+        config, args.pluripotent_labels, "pluripotent_labels", DEFAULT_PLURIPOTENT_LABELS
+    )
+    window_profile = _resolve_window_profile(config)
     fused_shift_frame = build_embedding_shift_frame(
         baseline_embeddings["fused_embeddings"].cpu().numpy(),
         perturbed_embeddings["fused_embeddings"].cpu().numpy(),
@@ -240,10 +317,13 @@ def main() -> None:
         cell_types=metadata["cell_type"],
         baseline_oskm_scores=metadata["baseline_oskm_score"],
         perturbed_oskm_scores=metadata["perturbed_oskm_score"],
-        somatic_labels=_parse_label_list(args.somatic_labels, DEFAULT_SOMATIC_LABELS),
-        pluripotent_labels=_parse_label_list(
-            args.pluripotent_labels, DEFAULT_PLURIPOTENT_LABELS
-        ),
+        baseline_rejuvenation_scores=metadata["baseline_rejuvenation_score"],
+        perturbed_rejuvenation_scores=metadata["perturbed_rejuvenation_score"],
+        baseline_pluripotency_marker_scores=metadata["baseline_pluripotency_marker_score"],
+        perturbed_pluripotency_marker_scores=metadata["perturbed_pluripotency_marker_score"],
+        somatic_labels=somatic_labels,
+        pluripotent_labels=pluripotent_labels,
+        window_profile=window_profile,
     )
     branch_summary = summarize_branch_counts(overlay_rows)
     zone_summary = summarize_zone_counts(overlay_rows)
@@ -268,6 +348,13 @@ def main() -> None:
             {
                 "branch_summary": branch_summary,
                 "zone_summary": zone_summary,
+                "dataset_profile": config.get("reprogramming", {}).get("dataset_profile"),
+                "dataset_manifest": dataset_manifest,
+                "reference_labels": {
+                    "somatic_labels": somatic_labels,
+                    "pluripotent_labels": pluripotent_labels,
+                },
+                "window_profile": window_profile,
             },
             handle,
             indent=2,

@@ -26,6 +26,7 @@ except ImportError:  # pragma: no cover - optional runtime dependency
     ad = None
 
 from biology.oskm import resolve_oskm_genes
+from biology.panels import score_expression_panels
 
 logger = logging.getLogger(__name__)
 
@@ -49,6 +50,7 @@ class CellSentenceDataset(Dataset):
         top_genes: int = 1000,
         oskm_anchor_mode: str = "none",
         oskm_species: str = "human",
+        marker_panels: Optional[Dict[str, List[str]]] = None,
     ):
         """
         Initialize dataset.
@@ -65,6 +67,7 @@ class CellSentenceDataset(Dataset):
         self.top_genes = top_genes
         self.oskm_anchor_mode = oskm_anchor_mode
         self.oskm_species = oskm_species
+        self.marker_panels = marker_panels or {}
         
         # Reuse provided tokenizer when scripts already loaded one.
         if tokenizer is not None:
@@ -121,6 +124,15 @@ class CellSentenceDataset(Dataset):
         anchor_genes = list(resolved_oskm_genes.values())
         oskm_scores = []
         oskm_present_symbols = []
+        panel_scores = (
+            score_expression_panels(
+                adata.X.toarray() if hasattr(adata.X, "toarray") else np.asarray(adata.X),
+                gene_names,
+                self.marker_panels,
+            )
+            if self.marker_panels
+            else {}
+        )
         
         for i in range(adata.n_obs):
             # Get expression values
@@ -159,6 +171,9 @@ class CellSentenceDataset(Dataset):
             'oskm_score': oskm_scores,
             'oskm_present_symbols': oskm_present_symbols,
         })
+
+        for panel_name, scores in panel_scores.items():
+            df[f"{panel_name}_score"] = scores
         
         return df
 

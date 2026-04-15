@@ -46,6 +46,25 @@ Transform the C2S-Scale-Gemma hybrid architecture into a specialized tool for mo
 - [ ] **Alignment script / losses:** Update contrastive alignment to use **hyperbolic distance** (e.g. `uhg.manifolds.Lorentz.dist` if Lorentz is the chosen model) instead of relying solely on `F.cosine_similarity` on embeddings that are not guaranteed to live in the same geometric space.
 - [ ] **Data prep (PBMC):** Isolate cells that **share regulatory pathways** with Yamanaka factors to stress-test “root-finding” before full reprogramming series are wired in.
 
+## Progress So Far
+
+- [x] Added compatibility layers so the dual-encoder training/evaluation stack works against a consistent API.
+- [x] Centralized OSKM aliases and presence checks for human/mouse-style symbol resolution.
+- [x] Added configurable OSKM anchor handling in the Cell2Sentence data path.
+- [x] Added OSKM-aware graph reweighting for kNN builds.
+- [x] Added in silico OSKM perturbation tooling and embedding-comparison workflows.
+- [x] Added branch/risk overlays, partial reprogramming window heuristics, and longevity-safe-zone reporting.
+- [x] Added config-driven reference labels, heuristic window profiles, and marker-panel scoring hooks for rejuvenation vs pluripotency risk.
+- [x] Added a configurable geometry-aware alignment mode (`projective_distance`) alongside the Euclidean cosine baseline.
+
+## Updated Remaining Build
+
+1. Expand the dataset-profile layer with dataset-specific marker panels, reference presets, and manifests for real OKSM time-course datasets.
+2. Harden and validate the curvature-aware alignment mode on real OKSM datasets, including ablations against the Euclidean baseline.
+3. Add dataset manifests and validation runs for fibroblast-to-iPSC / transient-OSKM studies.
+4. Expand visuals from static QA plots into trajectory-centric hyperbolic views and a lightweight interactive explorer.
+5. Tighten documentation around config profiles, benchmark datasets, and expected interpretation limits.
+
 ---
 
 ## Repository Mapping (this codebase)

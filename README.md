@@ -176,7 +176,7 @@ C2S-Scale-Gemma/
 
 ### OKSM / Reprogramming Options
 
-The data and graph pipeline now supports lightweight OKSM-aware configuration:
+The data, graph, and perturbation-report pipeline now supports lightweight OKSM-aware configuration:
 
 ```toml
 [knn_graph]
@@ -186,11 +186,46 @@ oskm_score_threshold = 0.0
 oskm_species = "human"
 ```
 
-Dataset-side sentence anchoring is exposed in code through `CellSentenceDataset` and is intended to become config-driven in the training scripts as the branch progresses:
+Dataset-side sentence anchoring and reprogramming heuristics are available through config and `CellSentenceDataset`:
 
 - `top_genes`
 - `oskm_anchor_mode` (`"none"` or `"prepend_present"`)
 - `oskm_species`
+
+```toml
+[reprogramming.references]
+somatic_labels = ["fibroblast", "somatic", "starting_state"]
+pluripotent_labels = ["esc", "ipsc", "pluripotent", "stem_cell"]
+
+[reprogramming.window_profile]
+partial_window_proximity_min = 0.35
+partial_window_proximity_max = 0.75
+partial_window_max_risk = 0.60
+longevity_safe_proximity_max = 0.65
+longevity_safe_max_risk = 0.45
+min_rejuvenation_score = 0.30
+
+[reprogramming.marker_panels]
+rejuvenation = ["SIRT1", "FOXO3", "PPARGC1A", "TFAM", "NFE2L2"]
+pluripotency_risk = ["NANOG", "LIN28A", "DPPA4", "UTF1", "PRDM14"]
+```
+
+Named dataset-specific profiles live in `configs/reprogramming_profiles.toml`. Current presets include:
+
+- `gse242423_human_fibroblast_oskm`
+- `gse176206_mouse_transient_partial`
+
+Geometry-aware alignment is also configurable through the fusion block:
+
+```toml
+[fusion]
+align_loss = "infonce"
+alignment_mode = "euclidean_cosine" # or "projective_distance"
+alignment_dim = 256
+text_projection_type = "learned"    # or "linear" / "inverse_chordal"
+```
+
+`euclidean_cosine` keeps the original projected-vector baseline. `projective_distance` maps text embeddings into geometry space and aligns them against the HGNN's raw hyperbolic branch before radial projection.
 
 ### Production Configuration (`configs/colab_7b.toml`)
 ```toml
@@ -289,6 +324,7 @@ Compare baseline vs perturbed cells in the learned representation space:
 ```bash
 uv run scripts/compare_oskm_perturbation_embeddings.py \
   --config configs/colab_7b.toml \
+  --dataset-profile gse242423_human_fibroblast_oskm \
   --checkpoint-path artifacts/align_dual_encoder/final_model.pt \
   --baseline-data-path data/raw/reprogramming.h5ad \
   --perturbed-data-path artifacts/oskm_perturbation/oskm_overexpress.h5ad \
@@ -300,6 +336,9 @@ This exports:
 - baseline and perturbed text / graph / fused embedding arrays
 - `embedding_shift_summary.json`
 - `fused_embedding_shift_frame.json`
+- `reprogramming_overlay_summary.json`
+
+The overlay summary now also records the selected dataset profile manifest, resolved reference labels, and the active heuristic window profile.
 
 Generate a static report with plots:
 
@@ -314,6 +353,10 @@ This produces:
 - `shift_histogram.png`
 - `oskm_score_vs_shift.png`
 - `shift_by_cell_type.png`
+- `risk_by_branch.png`
+- `progress_vs_risk.png`
+- `zone_counts.png`
+- `marker_panel_balance.png`
 - `OSKM_PERTURBATION_REPORT.md`
 
 ## 🧪 Testing

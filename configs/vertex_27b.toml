@@ -23,6 +23,9 @@ contrastive_tau = 0.07
 projector = "monotone_radial"
 proj_out_dim = 4096
 align_loss = "infonce"
+alignment_mode = "euclidean_cosine"
+alignment_dim = 384
+text_projection_type = "learned"
 align_weight = 1.0
 hard_negatives = true
 

@@ -53,3 +53,25 @@ max_neighbors = 128
 min_neighbors = 32
 radial_bands = 5
 band_size = 20
+
+[reprogramming.references]
+somatic_labels = ["fibroblast", "somatic", "starting_state"]
+pluripotent_labels = ["esc", "ipsc", "pluripotent", "stem_cell"]
+
+[reprogramming.window_profile]
+partial_window_proximity_min = 0.35
+partial_window_proximity_max = 0.75
+partial_window_max_risk = 0.60
+longevity_safe_proximity_max = 0.65
+longevity_safe_max_risk = 0.45
+pluripotency_risk_proximity_min = 0.80
+pluripotency_risk_score_min = 0.60
+min_rejuvenation_score = 0.30
+safe_max_pluripotency_marker = 0.40
+risk_min_pluripotency_marker = 0.60
+min_progress_delta = 0.0
+min_somatic_escape = 0.0
+
+[reprogramming.marker_panels]
+rejuvenation = ["SIRT1", "FOXO3", "PPARGC1A", "TFAM", "NFE2L2"]
+pluripotency_risk = ["NANOG", "LIN28A", "DPPA4", "UTF1", "PRDM14"]

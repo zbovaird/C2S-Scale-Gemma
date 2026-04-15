@@ -4,6 +4,7 @@ from eval.perturbation_report import (
     summarize_boolean_flag,
     summarize_risk_by_branch,
     summarize_shift_by_category,
+    summarize_value_by_category,
 )
 
 
@@ -65,3 +66,16 @@ def test_summarize_boolean_flag_counts_true_rows():
 
     assert summary["count"] == 2
     assert summary["n_cells"] == 3
+
+
+def test_summarize_value_by_category_aggregates_generic_metric():
+    rows = [
+        {"branch_label": "productive", "rejuvenation_score": 0.2},
+        {"branch_label": "productive", "rejuvenation_score": 0.8},
+        {"branch_label": "alternative", "rejuvenation_score": 0.4},
+    ]
+
+    summary = summarize_value_by_category(rows, "branch_label", "rejuvenation_score")
+
+    assert summary[0]["category"] == "productive"
+    assert summary[0]["mean_value"] == 0.5

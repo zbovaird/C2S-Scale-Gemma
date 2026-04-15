@@ -1,0 +1,71 @@
+# Dataset-specific OKSM / reprogramming profiles.
+# These are metadata-first manifests that can override references,
+# heuristic windows, and marker panels for named studies.
+
+[reprogramming_profiles.gse242423_human_fibroblast_oskm]
+title = "Human fibroblast OSKM 14-day single-cell time course"
+accession = "GSE242423"
+species = "human"
+modality = "scRNA-seq"
+source_url = "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE242423"
+baseline_data_hint = "data/raw/GSE242423.h5ad"
+cell_type_column = "cell_type"
+timepoint_column = "timepoint"
+timepoint_order = ["D0", "D2", "D4", "D6", "D8", "D10", "D12", "D14", "iPSC"]
+notes = "Human fibroblast OSKM induction with finely sampled single-cell transcriptome time course."
+
+[reprogramming_profiles.gse242423_human_fibroblast_oskm.references]
+somatic_labels = ["fibroblast", "hdf", "starting_state"]
+pluripotent_labels = ["ipsc", "esc", "pluripotent", "stem_cell"]
+
+[reprogramming_profiles.gse242423_human_fibroblast_oskm.window_profile]
+partial_window_proximity_min = 0.30
+partial_window_proximity_max = 0.72
+partial_window_max_risk = 0.58
+longevity_safe_proximity_max = 0.60
+longevity_safe_max_risk = 0.42
+pluripotency_risk_proximity_min = 0.82
+pluripotency_risk_score_min = 0.62
+min_rejuvenation_score = 0.28
+safe_max_pluripotency_marker = 0.38
+risk_min_pluripotency_marker = 0.62
+min_progress_delta = 0.0
+min_somatic_escape = 0.0
+
+[reprogramming_profiles.gse242423_human_fibroblast_oskm.marker_panels]
+rejuvenation = ["SIRT1", "FOXO3", "PPARGC1A", "TFAM", "NFE2L2"]
+pluripotency_risk = ["NANOG", "LIN28A", "DPPA4", "UTF1", "PRDM14"]
+
+[reprogramming_profiles.gse176206_mouse_transient_partial]
+title = "Mouse transient partial reprogramming in adipogenic cells and MSCs"
+accession = "GSE176206"
+species = "mouse"
+modality = "scRNA-seq"
+source_url = "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE176206"
+baseline_data_hint = "data/raw/GSE176206_adipo_screen.h5ad.gz"
+cell_type_column = "cell_type"
+timepoint_column = "phase"
+timepoint_order = ["baseline", "day3_induction", "day6_chase"]
+notes = "Transient OSKM induction with 3-day induction and 3-day chase; includes young and aged adipogenic cells and MSCs."
+
+[reprogramming_profiles.gse176206_mouse_transient_partial.references]
+somatic_labels = ["adipogenic", "msc", "somatic", "starting_state"]
+pluripotent_labels = ["pluripotent_like", "ipsc_like", "esc_like"]
+
+[reprogramming_profiles.gse176206_mouse_transient_partial.window_profile]
+partial_window_proximity_min = 0.25
+partial_window_proximity_max = 0.65
+partial_window_max_risk = 0.52
+longevity_safe_proximity_max = 0.55
+longevity_safe_max_risk = 0.36
+pluripotency_risk_proximity_min = 0.75
+pluripotency_risk_score_min = 0.58
+min_rejuvenation_score = 0.35
+safe_max_pluripotency_marker = 0.32
+risk_min_pluripotency_marker = 0.55
+min_progress_delta = 0.0
+min_somatic_escape = 0.0
+
+[reprogramming_profiles.gse176206_mouse_transient_partial.marker_panels]
+rejuvenation = ["Sirt1", "Foxo3", "Ppargc1a", "Tfam", "Nfe2l2"]
+pluripotency_risk = ["Nanog", "Lin28a", "Dppa4", "Utf1", "Prdm14"]

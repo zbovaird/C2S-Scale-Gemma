@@ -65,14 +65,19 @@ class DualEncoderTrainer(nn.Module):
     def compute_loss(self, batch: Dict[str, Any]) -> Dict[str, torch.Tensor]:
         batch = self._move_batch_to_device(batch)
         text_embeddings = self.get_text_representation(batch)
-        graph_embeddings = self.get_graph_representation(batch)
+        graph_outputs = self._encode_graph_batch(batch)
+        graph_embeddings = self._select_graph_embeddings_for_fusion(graph_outputs)
+        alignment_graph_embeddings = self._select_graph_embeddings_for_alignment(graph_outputs)
         fused_embeddings = self.get_fused_representation(
             batch,
             precomputed_text=text_embeddings,
             precomputed_graph=graph_embeddings,
         )
 
-        contrastive_loss_dict = self.contrastive_loss(text_embeddings, graph_embeddings)
+        contrastive_loss_dict = self.contrastive_loss(
+            text_embeddings,
+            alignment_graph_embeddings,
+        )
         contrastive_loss = contrastive_loss_dict.get(
             "total_loss",
             contrastive_loss_dict.get("contrastive_loss"),
@@ -90,6 +95,7 @@ class DualEncoderTrainer(nn.Module):
             "fusion_loss": fusion_loss,
             "text_embeddings": text_embeddings,
             "graph_embeddings": graph_embeddings,
+            "alignment_graph_embeddings": alignment_graph_embeddings,
             "fused_embeddings": fused_embeddings,
         }
 
@@ -102,33 +108,8 @@ class DualEncoderTrainer(nn.Module):
         return self._pool_text_embeddings(hidden_states, batch["attention_mask"])
 
     def get_graph_representation(self, batch: Dict[str, Any]) -> torch.Tensor:
-        batch_size = batch["input_ids"].size(0)
-        input_dim = (
-            self.config.get("model", {})
-            .get("hgnn", {})
-            .get("input_dim", getattr(self.hgnn_encoder, "input_dim", 64))
-        )
-        node_features = torch.randn(batch_size, input_dim, device=self.device)
-        edge_index = self._create_edge_index(batch_size)
-
-        graph_outputs = self.hgnn_encoder(node_features, edge_index)
-        if isinstance(graph_outputs, dict):
-            if graph_outputs.get("euclidean_embeddings") is not None:
-                return graph_outputs["euclidean_embeddings"]
-            if graph_outputs.get("graph_embeddings") is not None:
-                return graph_outputs["graph_embeddings"]
-            if graph_outputs.get("node_embeddings") is not None:
-                graph_embeddings = graph_outputs["node_embeddings"]
-            elif graph_outputs.get("hyperbolic_embeddings") is not None:
-                graph_embeddings = graph_outputs["hyperbolic_embeddings"]
-            else:
-                raise KeyError("Graph encoder outputs missing embedding tensors.")
-        else:
-            graph_embeddings = graph_outputs
-
-        if self.radial_projector is not None:
-            return self.radial_projector(graph_embeddings)
-        return graph_embeddings
+        graph_outputs = self._encode_graph_batch(batch)
+        return self._select_graph_embeddings_for_fusion(graph_outputs)
 
     def get_fused_representation(
         self,
@@ -163,7 +144,8 @@ class DualEncoderTrainer(nn.Module):
             for batch in dataloader:
                 batch = self._move_batch_to_device(batch)
                 text_embeddings = self.get_text_representation(batch)
-                graph_embeddings = self.get_graph_representation(batch)
+                graph_outputs = self._encode_graph_batch(batch)
+                graph_embeddings = self._select_graph_embeddings_for_fusion(graph_outputs)
                 all_text_embeddings.append(text_embeddings)
                 all_graph_embeddings.append(graph_embeddings)
 
@@ -204,6 +186,57 @@ class DualEncoderTrainer(nn.Module):
             except TypeError:
                 continue
         return self.text_model(**common_kwargs)
+
+    def _encode_graph_batch(self, batch: Dict[str, Any]) -> Any:
+        batch_size = batch["input_ids"].size(0)
+        input_dim = (
+            self.config.get("model", {})
+            .get("hgnn", {})
+            .get("input_dim", getattr(self.hgnn_encoder, "input_dim", 64))
+        )
+        node_features = torch.randn(batch_size, input_dim, device=self.device)
+        edge_index = self._create_edge_index(batch_size)
+        return self.hgnn_encoder(node_features, edge_index)
+
+    def _select_graph_embeddings_for_fusion(self, graph_outputs: Any) -> torch.Tensor:
+        if isinstance(graph_outputs, dict):
+            if graph_outputs.get("euclidean_embeddings") is not None:
+                return graph_outputs["euclidean_embeddings"]
+            if graph_outputs.get("graph_embeddings") is not None:
+                return graph_outputs["graph_embeddings"]
+            graph_embeddings = self._extract_hyperbolic_graph_embeddings(graph_outputs)
+        else:
+            graph_embeddings = graph_outputs
+
+        if self.radial_projector is not None:
+            return self.radial_projector(graph_embeddings)
+        return graph_embeddings
+
+    def _select_graph_embeddings_for_alignment(self, graph_outputs: Any) -> torch.Tensor:
+        if getattr(self.contrastive_loss, "requires_hyperbolic_graph_space", False):
+            if isinstance(graph_outputs, dict):
+                return self._extract_hyperbolic_graph_embeddings(
+                    graph_outputs,
+                    fallback_to_projected=True,
+                )
+            return graph_outputs
+        return self._select_graph_embeddings_for_fusion(graph_outputs)
+
+    def _extract_hyperbolic_graph_embeddings(
+        self,
+        graph_outputs: Dict[str, torch.Tensor],
+        fallback_to_projected: bool = False,
+    ) -> torch.Tensor:
+        if graph_outputs.get("hyperbolic_embeddings") is not None:
+            return graph_outputs["hyperbolic_embeddings"]
+        if graph_outputs.get("node_embeddings") is not None:
+            return graph_outputs["node_embeddings"]
+        if fallback_to_projected:
+            if graph_outputs.get("euclidean_embeddings") is not None:
+                return graph_outputs["euclidean_embeddings"]
+            if graph_outputs.get("graph_embeddings") is not None:
+                return graph_outputs["graph_embeddings"]
+        raise KeyError("Graph encoder outputs missing requested embedding tensors.")
 
     def _extract_text_hidden_states(self, model_outputs: Any) -> torch.Tensor:
         if isinstance(model_outputs, torch.Tensor):
