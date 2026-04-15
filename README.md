@@ -407,6 +407,19 @@ When the study track declares a `timepoint_column`, the validation benchmark als
 The validation-track registry also carries recommendation thresholds, so the benchmark summary can emit a track-specific judgment such as `prefer_projective`, `mixed`, or `prefer_euclidean`.
 Those recommendations now include supporting and concerning timepoints so it is easier to audit which stages of the trajectory are driving the conclusion.
 
+Generate validation trajectory plots from the benchmark summary:
+
+```bash
+uv run scripts/plot_validation_bundle.py \
+  --summary-path artifacts/validation_bundle/human_fibroblast_oskm/validation_benchmark_summary.json
+```
+
+This produces:
+
+- `validation_timepoint_progress_delta.png`
+- `validation_timepoint_safe_fraction.png`
+- `validation_timepoint_safe_delta.png`
+
 This produces:
 
 - `shift_histogram.png`

@@ -114,6 +114,7 @@ c2s-compare-perturbation = "scripts.compare_oskm_perturbation_embeddings:main"
 c2s-alignment-ablation = "scripts.run_alignment_ablation:main"
 c2s-validation-bundle = "scripts.run_validation_bundle:main"
 c2s-validation-summary = "scripts.summarize_validation_bundle:main"
+c2s-validation-plots = "scripts.plot_validation_bundle:main"
 c2s-perturbation-report = "scripts.generate_oskm_perturbation_report:main"
 
 [tool.hatch.build.targets.wheel]
