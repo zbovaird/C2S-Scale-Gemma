@@ -162,6 +162,26 @@ def plot_alignment_ablation(summary_rows: list[dict], output_path: Path) -> None
     plt.close()
 
 
+def plot_alignment_ablation_safety(summary_rows: list[dict], output_path: Path) -> None:
+    if not summary_rows:
+        return
+    labels = [row["label"] for row in summary_rows]
+    safe_values = [row["safe_fraction"] for row in summary_rows]
+    risk_values = [row["risk_fraction"] for row in summary_rows]
+
+    x_positions = range(len(labels))
+    plt.figure(figsize=(9, 5))
+    plt.bar([x - 0.18 for x in x_positions], safe_values, width=0.35, label="safe_fraction", color="#4C72B0")
+    plt.bar([x + 0.18 for x in x_positions], risk_values, width=0.35, label="risk_fraction", color="#C44E52")
+    plt.xticks(list(x_positions), labels, rotation=20, ha="right")
+    plt.ylabel("Fraction of cells")
+    plt.title("Safety profile by alignment mode")
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=200, bbox_inches="tight")
+    plt.close()
+
+
 def write_markdown_report(
     output_path: Path,
     embedding_summary: dict,
@@ -272,7 +292,11 @@ def write_markdown_report(
             lines.append(
                 f"- {row['label']} ({row['alignment_mode']}): "
                 f"{row['metric_key']}={row['metric_value']:.4f}, "
-                f"mean_cosine_similarity={row['mean_cosine_similarity']:.4f}"
+                f"mean_cosine_similarity={row['mean_cosine_similarity']:.4f}, "
+                f"productive_fraction={row['productive_fraction']:.4f}, "
+                f"safe_fraction={row['safe_fraction']:.4f}, "
+                f"risk_fraction={row['risk_fraction']:.4f}, "
+                f"mean_risk_score={row['mean_risk_score']:.4f}"
             )
         lines.append("")
 
@@ -289,6 +313,7 @@ def write_markdown_report(
             "- `zone_counts.png`",
             "- `marker_panel_balance.png`",
             "- `alignment_ablation.png`",
+            "- `alignment_ablation_safety.png`",
             "",
         ]
     )
@@ -375,6 +400,7 @@ def main() -> None:
                 ),
                 "dataset_profile": overlay_summary.get("dataset_profile"),
                 "embedding_summary": embedding_summary,
+                "overlay_summary": overlay_summary,
             }
         )
     ablation_dirs = [Path(path) for path in (args.ablation_comparison_dir or [])]
@@ -402,6 +428,7 @@ def main() -> None:
                     ),
                     "dataset_profile": candidate_overlay.get("dataset_profile"),
                     "embedding_summary": candidate_embedding_summary,
+                    "overlay_summary": candidate_overlay,
                 }
             )
     ablation_summary = summarize_alignment_ablation(ablation_runs)
@@ -414,6 +441,10 @@ def main() -> None:
     plot_zone_counts(zone_summaries, output_dir / "zone_counts.png")
     plot_marker_panel_scatter(fused_shift_rows, output_dir / "marker_panel_balance.png")
     plot_alignment_ablation(ablation_summary, output_dir / "alignment_ablation.png")
+    plot_alignment_ablation_safety(
+        ablation_summary,
+        output_dir / "alignment_ablation_safety.png",
+    )
     write_markdown_report(
         output_dir / "OSKM_PERTURBATION_REPORT.md",
         embedding_summary=embedding_summary,

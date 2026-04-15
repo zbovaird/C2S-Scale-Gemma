@@ -167,6 +167,22 @@ def summarize_alignment_ablation(
         representation_summary = embedding_summary.get(representation_key)
         if not representation_summary:
             continue
+        overlay_summary = summary.get("overlay_summary", {})
+        zone_summary = overlay_summary.get("zone_summary", {})
+        branch_summary = overlay_summary.get("branch_summary", {})
+        total_branch_count = sum(
+            int(branch.get("count", 0)) for branch in branch_summary.values()
+        )
+        productive_count = int(branch_summary.get("productive", {}).get("count", 0))
+        weighted_risk_total = 0.0
+        weighted_risk_count = 0
+        for branch in branch_summary.values():
+            count = int(branch.get("count", 0))
+            mean_risk = branch.get("mean_risk_score")
+            if mean_risk is None:
+                continue
+            weighted_risk_total += float(mean_risk) * count
+            weighted_risk_count += count
         rows.append(
             {
                 "label": str(summary.get("label", "unknown")),
@@ -176,6 +192,21 @@ def summarize_alignment_ablation(
                 "metric_value": float(representation_summary.get(metric_key, 0.0)),
                 "mean_cosine_similarity": float(
                     representation_summary.get("mean_cosine_similarity", 0.0)
+                ),
+                "productive_fraction": (
+                    productive_count / total_branch_count if total_branch_count else 0.0
+                ),
+                "safe_fraction": float(
+                    zone_summary.get("longevity_safe_zone_fraction", 0.0)
+                ),
+                "partial_fraction": float(
+                    zone_summary.get("partial_reprogramming_window_fraction", 0.0)
+                ),
+                "risk_fraction": float(
+                    zone_summary.get("pluripotency_risk_fraction", 0.0)
+                ),
+                "mean_risk_score": (
+                    weighted_risk_total / weighted_risk_count if weighted_risk_count else 0.0
                 ),
             }
         )

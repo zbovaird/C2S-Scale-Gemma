@@ -388,6 +388,7 @@ This produces:
 - `zone_counts.png`
 - `marker_panel_balance.png`
 - `alignment_ablation.png`
+- `alignment_ablation_safety.png`
 - `OSKM_PERTURBATION_REPORT.md`
 
 ## 🧪 Testing

@@ -98,6 +98,17 @@ def test_summarize_alignment_ablation_orders_by_metric_value():
                         "mean_cosine_similarity": 0.8,
                     }
                 },
+                "overlay_summary": {
+                    "zone_summary": {
+                        "longevity_safe_zone_fraction": 0.5,
+                        "partial_reprogramming_window_fraction": 0.7,
+                        "pluripotency_risk_fraction": 0.1,
+                    },
+                    "branch_summary": {
+                        "productive": {"count": 7, "mean_risk_score": 0.2},
+                        "alternative": {"count": 3, "mean_risk_score": 0.6},
+                    },
+                }
             },
             {
                 "label": "euclidean",
@@ -108,12 +119,25 @@ def test_summarize_alignment_ablation_orders_by_metric_value():
                         "mean_cosine_similarity": 0.6,
                     }
                 },
+                "overlay_summary": {
+                    "zone_summary": {
+                        "longevity_safe_zone_fraction": 0.2,
+                        "partial_reprogramming_window_fraction": 0.4,
+                        "pluripotency_risk_fraction": 0.3,
+                    },
+                    "branch_summary": {
+                        "productive": {"count": 4, "mean_risk_score": 0.4},
+                        "alternative": {"count": 6, "mean_risk_score": 0.7},
+                    },
+                }
             },
         ]
     )
 
     assert [row["label"] for row in summary] == ["projective", "euclidean"]
     assert summary[0]["alignment_mode"] == "projective_distance"
+    assert summary[0]["safe_fraction"] == 0.5
+    assert summary[0]["productive_fraction"] == 0.7
 
 
 def test_load_ablation_dirs_from_manifest_skips_primary_dir(tmp_path):
