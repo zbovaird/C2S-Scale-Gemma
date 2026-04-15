@@ -301,6 +301,21 @@ This exports:
 - `embedding_shift_summary.json`
 - `fused_embedding_shift_frame.json`
 
+Generate a static report with plots:
+
+```bash
+uv run scripts/generate_oskm_perturbation_report.py \
+  --comparison-dir artifacts/oskm_embedding_comparison \
+  --perturbation-summary artifacts/oskm_perturbation/oskm_overexpress_summary.json
+```
+
+This produces:
+
+- `shift_histogram.png`
+- `oskm_score_vs_shift.png`
+- `shift_by_cell_type.png`
+- `OSKM_PERTURBATION_REPORT.md`
+
 ## 🧪 Testing
 
 Targeted CPU-friendly tests are included for the compatibility and OKSM groundwork:
@@ -316,6 +331,7 @@ The current tests focus on:
 - visualization-prep helpers
 - Phase B utilities such as OSKM-aware data and graph helpers
 - OSKM perturbation and embedding-shift comparison helpers
+- perturbation report helpers
 
 ### Colab Quick Start
 

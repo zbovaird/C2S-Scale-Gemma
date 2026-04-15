@@ -20,6 +20,13 @@ sys.path.append(str(Path(__file__).parent.parent / "src"))
 from data.collate import GraphTextCollator
 from data.dataset import Cell2SentenceDataset
 from eval.embedding_shift import build_embedding_shift_frame, summarize_embedding_shift
+from eval.reprogramming_metrics import (
+    DEFAULT_PLURIPOTENT_LABELS,
+    DEFAULT_SOMATIC_LABELS,
+    build_reprogramming_overlay_rows,
+    summarize_branch_counts,
+    summarize_zone_counts,
+)
 from fusion.align_losses import InfoNCELoss
 from fusion.trainer import DualEncoderTrainer
 from fusion.heads import FusionHead
@@ -144,6 +151,12 @@ def _get_column_values(dataset: Cell2SentenceDataset, column: str, default_value
     return [default_value] * len(dataset.cell_data)
 
 
+def _parse_label_list(raw_value: str | None, default_values: tuple[str, ...]) -> list[str]:
+    if raw_value is None:
+        return list(default_values)
+    return [item.strip() for item in raw_value.split(",") if item.strip()]
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Compare baseline vs perturbed embeddings")
     parser.add_argument("--config", type=str, required=True, help="Path to TOML config")
@@ -157,6 +170,18 @@ def main() -> None:
         help="Directory for comparison outputs",
     )
     parser.add_argument("--batch-size", type=int, default=8, help="Embedding extraction batch size")
+    parser.add_argument(
+        "--somatic-labels",
+        type=str,
+        default=",".join(DEFAULT_SOMATIC_LABELS),
+        help="Comma-separated cell_type labels defining the somatic reference",
+    )
+    parser.add_argument(
+        "--pluripotent-labels",
+        type=str,
+        default=",".join(DEFAULT_PLURIPOTENT_LABELS),
+        help="Comma-separated cell_type labels defining the pluripotent reference",
+    )
     args = parser.parse_args()
 
     config = load_config(args.config)
@@ -209,6 +234,21 @@ def main() -> None:
         perturbed_embeddings["fused_embeddings"].cpu().numpy(),
         metadata=metadata,
     )
+    overlay_rows = build_reprogramming_overlay_rows(
+        baseline_embeddings["fused_embeddings"].cpu().numpy(),
+        perturbed_embeddings["fused_embeddings"].cpu().numpy(),
+        cell_types=metadata["cell_type"],
+        baseline_oskm_scores=metadata["baseline_oskm_score"],
+        perturbed_oskm_scores=metadata["perturbed_oskm_score"],
+        somatic_labels=_parse_label_list(args.somatic_labels, DEFAULT_SOMATIC_LABELS),
+        pluripotent_labels=_parse_label_list(
+            args.pluripotent_labels, DEFAULT_PLURIPOTENT_LABELS
+        ),
+    )
+    branch_summary = summarize_branch_counts(overlay_rows)
+    zone_summary = summarize_zone_counts(overlay_rows)
+    for row, overlay_row in zip(fused_shift_frame, overlay_rows):
+        row.update(overlay_row)
 
     np.save(output_dir / "baseline_text_embeddings.npy", baseline_embeddings["text_embeddings"].cpu().numpy())
     np.save(output_dir / "baseline_graph_embeddings.npy", baseline_embeddings["graph_embeddings"].cpu().numpy())
@@ -221,6 +261,17 @@ def main() -> None:
         json.dump(comparison_summary, handle, indent=2)
     with (output_dir / "fused_embedding_shift_frame.json").open("w", encoding="utf-8") as handle:
         json.dump(fused_shift_frame, handle, indent=2)
+    with (output_dir / "reprogramming_overlay_summary.json").open(
+        "w", encoding="utf-8"
+    ) as handle:
+        json.dump(
+            {
+                "branch_summary": branch_summary,
+                "zone_summary": zone_summary,
+            },
+            handle,
+            indent=2,
+        )
 
     logger.info("Saved embedding comparison artifacts to %s", output_dir)
 
