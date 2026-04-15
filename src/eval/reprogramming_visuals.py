@@ -95,3 +95,50 @@ def compute_oskm_score_matrix(
 
     stacked = np.vstack([np.asarray(expression_frame[gene]) for gene in available_genes])
     return np.sum(stacked, axis=0)
+
+
+def build_perturbation_comparison_frame(
+    baseline_scores: Sequence[float],
+    perturbed_scores: Sequence[float],
+    metadata: Optional[Mapping[str, Sequence[object]]] = None,
+) -> list[dict]:
+    """Build row-wise records for plotting perturbation score shifts."""
+    baseline = list(baseline_scores)
+    perturbed = list(perturbed_scores)
+    if len(baseline) != len(perturbed):
+        raise ValueError("baseline_scores and perturbed_scores must have same length.")
+
+    rows = []
+    for idx, (base_value, perturbed_value) in enumerate(zip(baseline, perturbed)):
+        row = {
+            "cell_index": idx,
+            "baseline_score": float(base_value),
+            "perturbed_score": float(perturbed_value),
+            "delta_score": float(perturbed_value - base_value),
+        }
+        if metadata:
+            for key, values in metadata.items():
+                if len(values) != len(baseline):
+                    raise ValueError(f"Metadata column '{key}' has incorrect length.")
+                row[key] = values[idx]
+        rows.append(row)
+    return rows
+
+
+def summarize_radial_shift(
+    baseline_distances: Sequence[float],
+    perturbed_distances: Sequence[float],
+) -> dict:
+    """Summarize before/after distance shifts for trajectory plots."""
+    baseline = np.asarray(list(baseline_distances), dtype=float)
+    perturbed = np.asarray(list(perturbed_distances), dtype=float)
+    if baseline.shape != perturbed.shape:
+        raise ValueError("baseline_distances and perturbed_distances must have same shape.")
+
+    deltas = perturbed - baseline
+    return {
+        "mean_shift": float(np.mean(deltas)) if deltas.size else 0.0,
+        "median_shift": float(np.median(deltas)) if deltas.size else 0.0,
+        "positive_shift_fraction": float(np.mean(deltas > 0)) if deltas.size else 0.0,
+        "n_cells": int(deltas.size),
+    }

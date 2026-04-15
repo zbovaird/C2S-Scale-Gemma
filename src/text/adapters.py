@@ -136,6 +136,14 @@ class LoRAAdapter(nn.Module):
             lora_out = lora_out + self.bias
         
         return lora_out
+
+    def load_state_dict(self, state_dict, strict: bool = True):
+        """Support checkpoint keys with or without the wrapper's ``model.`` prefix."""
+        if self.model is not None and state_dict:
+            has_model_prefix = any(key.startswith("model.") for key in state_dict)
+            if not has_model_prefix:
+                state_dict = {f"model.{key}": value for key, value in state_dict.items()}
+        return super().load_state_dict(state_dict, strict=strict)
     
     def get_scaling_factor(self) -> float:
         """Get LoRA scaling factor."""

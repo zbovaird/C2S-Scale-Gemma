@@ -272,6 +272,35 @@ uv run scripts/finetune_lora.py --cfg configs/colab_7b.toml
 uv run scripts/evaluate.py --cfg configs/colab_7b.toml
 ```
 
+### OSKM Counterfactual Workflow
+
+Generate an in silico perturbation dataset:
+
+```bash
+uv run scripts/perturb_oskm_expression.py \
+  --data-path data/raw/reprogramming.h5ad \
+  --mode overexpress \
+  --factor 2.0 \
+  --output-dir artifacts/oskm_perturbation
+```
+
+Compare baseline vs perturbed cells in the learned representation space:
+
+```bash
+uv run scripts/compare_oskm_perturbation_embeddings.py \
+  --config configs/colab_7b.toml \
+  --checkpoint-path artifacts/align_dual_encoder/final_model.pt \
+  --baseline-data-path data/raw/reprogramming.h5ad \
+  --perturbed-data-path artifacts/oskm_perturbation/oskm_overexpress.h5ad \
+  --output-dir artifacts/oskm_embedding_comparison
+```
+
+This exports:
+
+- baseline and perturbed text / graph / fused embedding arrays
+- `embedding_shift_summary.json`
+- `fused_embedding_shift_frame.json`
+
 ## 🧪 Testing
 
 Targeted CPU-friendly tests are included for the compatibility and OKSM groundwork:
@@ -286,6 +315,7 @@ The current tests focus on:
 - lightweight alignment-loss behavior
 - visualization-prep helpers
 - Phase B utilities such as OSKM-aware data and graph helpers
+- OSKM perturbation and embedding-shift comparison helpers
 
 ### Colab Quick Start
 

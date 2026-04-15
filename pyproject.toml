@@ -109,6 +109,8 @@ c2s-align = "scripts.align_dual_encoder:main"
 c2s-finetune = "scripts.finetune_lora:main"
 c2s-evaluate = "scripts.evaluate:main"
 c2s-export = "scripts.export_artifacts:main"
+c2s-perturb-oskm = "scripts.perturb_oskm_expression:main"
+c2s-compare-perturbation = "scripts.compare_oskm_perturbation_embeddings:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src"]
