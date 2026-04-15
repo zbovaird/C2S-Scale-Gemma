@@ -1,5 +1,6 @@
 from eval.validation_summary import (
     build_alignment_recommendation,
+    build_recommendation_evidence,
     build_validation_benchmark_rows,
     build_validation_benchmark_summary,
     build_timepoint_comparison_rows,
@@ -195,6 +196,7 @@ def test_build_alignment_recommendation_prefers_projective_when_thresholds_clear
         timepoint_comparison=[
             {
                 "label": "projective",
+                "timepoint": "D2",
                 "delta_safe_fraction": 0.1,
             }
         ],
@@ -202,3 +204,27 @@ def test_build_alignment_recommendation_prefers_projective_when_thresholds_clear
 
     assert recommendation["status"] == "prefer_projective"
     assert recommendation["preferred_alignment"] == "projective_distance"
+    assert recommendation["evidence"]["top_supporting_timepoints"][0]["timepoint"] == "D2"
+
+
+def test_build_recommendation_evidence_surfaces_best_and_worst_timepoints():
+    evidence = build_recommendation_evidence(
+        [
+            {
+                "timepoint": "D2",
+                "delta_safe_fraction": 0.2,
+                "delta_productive_fraction": 0.1,
+                "delta_risk_fraction": -0.1,
+            },
+            {
+                "timepoint": "D6",
+                "delta_safe_fraction": -0.1,
+                "delta_productive_fraction": -0.1,
+                "delta_risk_fraction": 0.2,
+            },
+        ],
+        top_k=1,
+    )
+
+    assert evidence["top_supporting_timepoints"][0]["timepoint"] == "D2"
+    assert evidence["top_concerning_timepoints"][0]["timepoint"] == "D6"

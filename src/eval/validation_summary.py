@@ -190,6 +190,7 @@ def build_alignment_recommendation(
             "status": "unavailable",
             "preferred_alignment": None,
             "reason": "Required alignment runs were not both present.",
+            "evidence": {"top_supporting_timepoints": [], "top_concerning_timepoints": []},
         }
 
     safe_gain = float(candidate_row["safe_fraction"]) - float(baseline_row["safe_fraction"])
@@ -231,6 +232,11 @@ def build_alignment_recommendation(
         preferred_alignment = baseline_row.get("alignment_mode")
         reason = "Projective alignment does not currently clear the track-specific safety/productivity thresholds."
 
+    candidate_timepoint_rows = [
+        row for row in timepoint_comparison if row.get("label") == candidate_label
+    ]
+    evidence = build_recommendation_evidence(candidate_timepoint_rows)
+
     return {
         "status": status,
         "preferred_alignment": preferred_alignment,
@@ -243,4 +249,44 @@ def build_alignment_recommendation(
             "timepoint_safe_gains": timepoint_safe_gains,
         },
         "thresholds": recommendation_config,
+        "evidence": evidence,
+    }
+
+
+def build_recommendation_evidence(
+    timepoint_comparison_rows: Sequence[Dict[str, Any]],
+    top_k: int = 3,
+) -> Dict[str, list[dict]]:
+    """Return the strongest positive and negative timepoint evidence rows."""
+    scored_rows = []
+    for row in timepoint_comparison_rows:
+        support_score = (
+            float(row.get("delta_safe_fraction", 0.0))
+            + float(row.get("delta_productive_fraction", 0.0))
+            - float(row.get("delta_risk_fraction", 0.0))
+        )
+        concern_score = (
+            float(row.get("delta_risk_fraction", 0.0))
+            - float(row.get("delta_safe_fraction", 0.0))
+            - float(row.get("delta_productive_fraction", 0.0))
+        )
+        scored_row = dict(row)
+        scored_row["timepoint"] = str(row.get("timepoint", "unknown"))
+        scored_row["support_score"] = support_score
+        scored_row["concern_score"] = concern_score
+        scored_rows.append(scored_row)
+
+    top_supporting = sorted(
+        scored_rows,
+        key=lambda row: row["support_score"],
+        reverse=True,
+    )[:top_k]
+    top_concerning = sorted(
+        scored_rows,
+        key=lambda row: row["concern_score"],
+        reverse=True,
+    )[:top_k]
+    return {
+        "top_supporting_timepoints": top_supporting,
+        "top_concerning_timepoints": top_concerning,
     }

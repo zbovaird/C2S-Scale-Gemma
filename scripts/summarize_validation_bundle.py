@@ -37,6 +37,31 @@ def write_markdown_summary(output_path: Path, summary: dict) -> None:
         "## Runs",
         "",
     ]
+    recommendation_evidence = summary.get("recommendation", {}).get("evidence", {})
+    top_supporting = recommendation_evidence.get("top_supporting_timepoints", [])
+    top_concerning = recommendation_evidence.get("top_concerning_timepoints", [])
+    if top_supporting:
+        lines.extend(["## Recommendation Evidence: Supporting", ""])
+        for row in top_supporting:
+            lines.append(
+                f"- {row['timepoint']}: "
+                f"support_score={row['support_score']:.4f}, "
+                f"delta_safe_fraction={row['delta_safe_fraction']:.4f}, "
+                f"delta_productive_fraction={row['delta_productive_fraction']:.4f}, "
+                f"delta_risk_fraction={row['delta_risk_fraction']:.4f}"
+            )
+        lines.append("")
+    if top_concerning:
+        lines.extend(["## Recommendation Evidence: Concerning", ""])
+        for row in top_concerning:
+            lines.append(
+                f"- {row['timepoint']}: "
+                f"concern_score={row['concern_score']:.4f}, "
+                f"delta_safe_fraction={row['delta_safe_fraction']:.4f}, "
+                f"delta_productive_fraction={row['delta_productive_fraction']:.4f}, "
+                f"delta_risk_fraction={row['delta_risk_fraction']:.4f}"
+            )
+        lines.append("")
     for row in summary.get("runs", []):
         lines.append(
             f"- {row['label']} ({row['alignment_mode']}): "

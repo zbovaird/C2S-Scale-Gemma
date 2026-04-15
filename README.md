@@ -405,6 +405,7 @@ This produces `validation_benchmark_summary.json` and `VALIDATION_BENCHMARK.md` 
 
 When the study track declares a `timepoint_column`, the validation benchmark also includes per-timepoint progression summaries so Euclidean and projective runs can be compared by stage, not just by aggregate shift/safety metrics.
 The validation-track registry also carries recommendation thresholds, so the benchmark summary can emit a track-specific judgment such as `prefer_projective`, `mixed`, or `prefer_euclidean`.
+Those recommendations now include supporting and concerning timepoints so it is easier to audit which stages of the trajectory are driving the conclusion.
 
 This produces:
 
