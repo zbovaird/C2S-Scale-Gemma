@@ -356,6 +356,28 @@ uv run scripts/generate_oskm_perturbation_report.py \
   --ablation-comparison-dir artifacts/oskm_embedding_comparison_euclidean
 ```
 
+Or generate both comparison runs in one command when you already have separate Euclidean and projective checkpoints:
+
+```bash
+uv run scripts/run_alignment_ablation.py \
+  --baseline-data-path data/raw/reprogramming.h5ad \
+  --perturbed-data-path artifacts/oskm_perturbation/oskm_overexpress.h5ad \
+  --dataset-profile gse242423_human_fibroblast_oskm \
+  --euclidean-config configs/colab_7b.toml \
+  --euclidean-checkpoint artifacts/euclidean/final_model.pt \
+  --projective-config configs/colab_7b.toml \
+  --projective-checkpoint artifacts/projective/final_model.pt \
+  --output-root artifacts/alignment_ablation
+```
+
+That writes `euclidean/`, `projective/`, and `ablation_manifest.json` under the output root. The report script can consume that manifest directly:
+
+```bash
+uv run scripts/generate_oskm_perturbation_report.py \
+  --comparison-dir artifacts/alignment_ablation/projective \
+  --ablation-manifest artifacts/alignment_ablation/ablation_manifest.json
+```
+
 This produces:
 
 - `shift_histogram.png`

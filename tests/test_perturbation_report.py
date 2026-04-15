@@ -1,3 +1,7 @@
+import json
+from pathlib import Path
+
+from eval.alignment_ablation import load_ablation_dirs_from_manifest
 from eval.perturbation_report import (
     compute_shift_histogram,
     get_top_shift_rows,
@@ -110,3 +114,26 @@ def test_summarize_alignment_ablation_orders_by_metric_value():
 
     assert [row["label"] for row in summary] == ["projective", "euclidean"]
     assert summary[0]["alignment_mode"] == "projective_distance"
+
+
+def test_load_ablation_dirs_from_manifest_skips_primary_dir(tmp_path):
+    projective_dir = tmp_path / "projective"
+    euclidean_dir = tmp_path / "euclidean"
+    projective_dir.mkdir()
+    euclidean_dir.mkdir()
+    manifest_path = tmp_path / "ablation_manifest.json"
+    manifest_path.write_text(
+        json.dumps(
+            {
+                "runs": [
+                    {"label": "projective", "output_dir": str(projective_dir)},
+                    {"label": "euclidean", "output_dir": str(euclidean_dir)},
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    ablation_dirs = load_ablation_dirs_from_manifest(manifest_path, projective_dir)
+
+    assert ablation_dirs == [euclidean_dir]

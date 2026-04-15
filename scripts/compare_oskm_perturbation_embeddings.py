@@ -179,57 +179,31 @@ def _resolve_window_profile(config: Dict[str, Any]) -> Dict[str, Any]:
     return dict(config.get("reprogramming", {}).get("window_profile", {}))
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(description="Compare baseline vs perturbed embeddings")
-    parser.add_argument("--config", type=str, required=True, help="Path to TOML config")
-    parser.add_argument("--checkpoint-path", type=str, required=True, help="Model checkpoint path")
-    parser.add_argument("--baseline-data-path", type=str, required=True, help="Baseline .h5ad path")
-    parser.add_argument("--perturbed-data-path", type=str, required=True, help="Perturbed .h5ad path")
-    parser.add_argument(
-        "--output-dir",
-        type=str,
-        default="artifacts/oskm_embedding_comparison",
-        help="Directory for comparison outputs",
-    )
-    parser.add_argument("--batch-size", type=int, default=8, help="Embedding extraction batch size")
-    parser.add_argument(
-        "--dataset-profile",
-        type=str,
-        default=None,
-        help="Optional named dataset profile from configs/reprogramming_profiles.toml",
-    )
-    parser.add_argument(
-        "--dataset-profile-config",
-        type=str,
-        default="configs/reprogramming_profiles.toml",
-        help="Path to the dataset profile registry",
-    )
-    parser.add_argument(
-        "--somatic-labels",
-        type=str,
-        default=None,
-        help="Comma-separated cell_type labels defining the somatic reference",
-    )
-    parser.add_argument(
-        "--pluripotent-labels",
-        type=str,
-        default=None,
-        help="Comma-separated cell_type labels defining the pluripotent reference",
-    )
-    args = parser.parse_args()
-
-    config = load_config(args.config)
+def run_embedding_comparison(
+    *,
+    config_path: str,
+    checkpoint_path: str,
+    baseline_data_path: str,
+    perturbed_data_path: str,
+    output_dir: str,
+    batch_size: int = 8,
+    dataset_profile: str | None = None,
+    dataset_profile_config: str = "configs/reprogramming_profiles.toml",
+    somatic_labels_arg: str | None = None,
+    pluripotent_labels_arg: str | None = None,
+) -> dict:
+    config = load_config(config_path)
     config, dataset_manifest = resolve_dataset_profile(
         config,
-        profile_name=args.dataset_profile,
-        profile_config_path=args.dataset_profile_config,
+        profile_name=dataset_profile,
+        profile_config_path=dataset_profile_config,
     )
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    output_dir = Path(args.output_dir)
-    output_dir.mkdir(parents=True, exist_ok=True)
+    output_path = Path(output_dir)
+    output_path.mkdir(parents=True, exist_ok=True)
 
     hgnn_encoder, lora_adapter, fusion_head, tokenizer = load_models(
-        args.checkpoint_path,
+        checkpoint_path,
         config,
         device,
     )
@@ -254,12 +228,12 @@ def main() -> None:
     )
     trainer.eval()
 
-    baseline_dataset = create_dataset(args.baseline_data_path, tokenizer, config, device)
-    perturbed_dataset = create_dataset(args.perturbed_data_path, tokenizer, config, device)
+    baseline_dataset = create_dataset(baseline_data_path, tokenizer, config, device)
+    perturbed_dataset = create_dataset(perturbed_data_path, tokenizer, config, device)
     if len(baseline_dataset) != len(perturbed_dataset):
         raise ValueError("Baseline and perturbed datasets must contain the same number of cells.")
-    baseline_loader = create_dataloader(baseline_dataset, tokenizer, args.batch_size)
-    perturbed_loader = create_dataloader(perturbed_dataset, tokenizer, args.batch_size)
+    baseline_loader = create_dataloader(baseline_dataset, tokenizer, batch_size)
+    perturbed_loader = create_dataloader(perturbed_dataset, tokenizer, batch_size)
 
     baseline_embeddings = trainer.get_embeddings(baseline_loader)
     perturbed_embeddings = trainer.get_embeddings(perturbed_loader)
@@ -300,10 +274,10 @@ def main() -> None:
         ),
     }
     somatic_labels = _resolve_reference_labels(
-        config, args.somatic_labels, "somatic_labels", DEFAULT_SOMATIC_LABELS
+        config, somatic_labels_arg, "somatic_labels", DEFAULT_SOMATIC_LABELS
     )
     pluripotent_labels = _resolve_reference_labels(
-        config, args.pluripotent_labels, "pluripotent_labels", DEFAULT_PLURIPOTENT_LABELS
+        config, pluripotent_labels_arg, "pluripotent_labels", DEFAULT_PLURIPOTENT_LABELS
     )
     window_profile = _resolve_window_profile(config)
     fused_shift_frame = build_embedding_shift_frame(
@@ -330,48 +304,103 @@ def main() -> None:
     for row, overlay_row in zip(fused_shift_frame, overlay_rows):
         row.update(overlay_row)
 
-    np.save(output_dir / "baseline_text_embeddings.npy", baseline_embeddings["text_embeddings"].cpu().numpy())
-    np.save(output_dir / "baseline_graph_embeddings.npy", baseline_embeddings["graph_embeddings"].cpu().numpy())
-    np.save(output_dir / "baseline_fused_embeddings.npy", baseline_embeddings["fused_embeddings"].cpu().numpy())
-    np.save(output_dir / "perturbed_text_embeddings.npy", perturbed_embeddings["text_embeddings"].cpu().numpy())
-    np.save(output_dir / "perturbed_graph_embeddings.npy", perturbed_embeddings["graph_embeddings"].cpu().numpy())
-    np.save(output_dir / "perturbed_fused_embeddings.npy", perturbed_embeddings["fused_embeddings"].cpu().numpy())
+    np.save(output_path / "baseline_text_embeddings.npy", baseline_embeddings["text_embeddings"].cpu().numpy())
+    np.save(output_path / "baseline_graph_embeddings.npy", baseline_embeddings["graph_embeddings"].cpu().numpy())
+    np.save(output_path / "baseline_fused_embeddings.npy", baseline_embeddings["fused_embeddings"].cpu().numpy())
+    np.save(output_path / "perturbed_text_embeddings.npy", perturbed_embeddings["text_embeddings"].cpu().numpy())
+    np.save(output_path / "perturbed_graph_embeddings.npy", perturbed_embeddings["graph_embeddings"].cpu().numpy())
+    np.save(output_path / "perturbed_fused_embeddings.npy", perturbed_embeddings["fused_embeddings"].cpu().numpy())
 
-    with (output_dir / "embedding_shift_summary.json").open("w", encoding="utf-8") as handle:
+    with (output_path / "embedding_shift_summary.json").open("w", encoding="utf-8") as handle:
         json.dump(comparison_summary, handle, indent=2)
-    with (output_dir / "fused_embedding_shift_frame.json").open("w", encoding="utf-8") as handle:
+    with (output_path / "fused_embedding_shift_frame.json").open("w", encoding="utf-8") as handle:
         json.dump(fused_shift_frame, handle, indent=2)
-    with (output_dir / "reprogramming_overlay_summary.json").open(
+    overlay_summary = {
+        "branch_summary": branch_summary,
+        "zone_summary": zone_summary,
+        "dataset_profile": config.get("reprogramming", {}).get("dataset_profile"),
+        "dataset_manifest": dataset_manifest,
+        "alignment": {
+            "alignment_mode": config.get("fusion", {}).get(
+                "alignment_mode",
+                "euclidean_cosine",
+            ),
+            "alignment_dim": config.get("fusion", {}).get("alignment_dim"),
+            "text_projection_type": config.get("fusion", {}).get(
+                "text_projection_type",
+                "learned",
+            ),
+        },
+        "reference_labels": {
+            "somatic_labels": somatic_labels,
+            "pluripotent_labels": pluripotent_labels,
+        },
+        "window_profile": window_profile,
+    }
+    with (output_path / "reprogramming_overlay_summary.json").open(
         "w", encoding="utf-8"
     ) as handle:
-        json.dump(
-            {
-                "branch_summary": branch_summary,
-                "zone_summary": zone_summary,
-                "dataset_profile": config.get("reprogramming", {}).get("dataset_profile"),
-                "dataset_manifest": dataset_manifest,
-                "alignment": {
-                    "alignment_mode": config.get("fusion", {}).get(
-                        "alignment_mode",
-                        "euclidean_cosine",
-                    ),
-                    "alignment_dim": config.get("fusion", {}).get("alignment_dim"),
-                    "text_projection_type": config.get("fusion", {}).get(
-                        "text_projection_type",
-                        "learned",
-                    ),
-                },
-                "reference_labels": {
-                    "somatic_labels": somatic_labels,
-                    "pluripotent_labels": pluripotent_labels,
-                },
-                "window_profile": window_profile,
-            },
-            handle,
-            indent=2,
-        )
+        json.dump(overlay_summary, handle, indent=2)
 
-    logger.info("Saved embedding comparison artifacts to %s", output_dir)
+    logger.info("Saved embedding comparison artifacts to %s", output_path)
+    return {
+        "output_dir": str(output_path),
+        "embedding_summary": comparison_summary,
+        "overlay_summary": overlay_summary,
+    }
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Compare baseline vs perturbed embeddings")
+    parser.add_argument("--config", type=str, required=True, help="Path to TOML config")
+    parser.add_argument("--checkpoint-path", type=str, required=True, help="Model checkpoint path")
+    parser.add_argument("--baseline-data-path", type=str, required=True, help="Baseline .h5ad path")
+    parser.add_argument("--perturbed-data-path", type=str, required=True, help="Perturbed .h5ad path")
+    parser.add_argument(
+        "--output-dir",
+        type=str,
+        default="artifacts/oskm_embedding_comparison",
+        help="Directory for comparison outputs",
+    )
+    parser.add_argument("--batch-size", type=int, default=8, help="Embedding extraction batch size")
+    parser.add_argument(
+        "--dataset-profile",
+        type=str,
+        default=None,
+        help="Optional named dataset profile from configs/reprogramming_profiles.toml",
+    )
+    parser.add_argument(
+        "--dataset-profile-config",
+        type=str,
+        default="configs/reprogramming_profiles.toml",
+        help="Path to the dataset profile registry",
+    )
+    parser.add_argument(
+        "--somatic-labels",
+        type=str,
+        default=None,
+        help="Comma-separated cell_type labels defining the somatic reference",
+    )
+    parser.add_argument(
+        "--pluripotent-labels",
+        type=str,
+        default=None,
+        help="Comma-separated cell_type labels defining the pluripotent reference",
+    )
+    args = parser.parse_args()
+
+    run_embedding_comparison(
+        config_path=args.config,
+        checkpoint_path=args.checkpoint_path,
+        baseline_data_path=args.baseline_data_path,
+        perturbed_data_path=args.perturbed_data_path,
+        output_dir=args.output_dir,
+        batch_size=args.batch_size,
+        dataset_profile=args.dataset_profile,
+        dataset_profile_config=args.dataset_profile_config,
+        somatic_labels_arg=args.somatic_labels,
+        pluripotent_labels_arg=args.pluripotent_labels,
+    )
 
 
 if __name__ == "__main__":

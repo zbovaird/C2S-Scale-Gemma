@@ -10,6 +10,7 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 
+from eval.alignment_ablation import load_ablation_dirs_from_manifest
 from eval.perturbation_report import (
     get_top_shift_rows,
     summarize_alignment_ablation,
@@ -321,6 +322,12 @@ def main() -> None:
         default=None,
         help="Optional additional comparison directory to include in alignment ablations",
     )
+    parser.add_argument(
+        "--ablation-manifest",
+        type=str,
+        default=None,
+        help="Optional manifest from run_alignment_ablation.py",
+    )
     args = parser.parse_args()
 
     comparison_dir = Path(args.comparison_dir)
@@ -370,9 +377,13 @@ def main() -> None:
                 "embedding_summary": embedding_summary,
             }
         )
-    if args.ablation_comparison_dir:
-        for candidate_dir in args.ablation_comparison_dir:
-            candidate_path = Path(candidate_dir)
+    ablation_dirs = [Path(path) for path in (args.ablation_comparison_dir or [])]
+    if args.ablation_manifest is not None:
+        ablation_dirs.extend(
+            load_ablation_dirs_from_manifest(Path(args.ablation_manifest), comparison_dir)
+        )
+    if ablation_dirs:
+        for candidate_path in ablation_dirs:
             candidate_embedding_summary = load_json(
                 candidate_path / "embedding_shift_summary.json"
             )
