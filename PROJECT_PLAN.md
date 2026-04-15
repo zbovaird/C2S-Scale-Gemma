@@ -56,14 +56,15 @@ Transform the C2S-Scale-Gemma hybrid architecture into a specialized tool for mo
 - [x] Added branch/risk overlays, partial reprogramming window heuristics, and longevity-safe-zone reporting.
 - [x] Added config-driven reference labels, heuristic window profiles, and marker-panel scoring hooks for rejuvenation vs pluripotency risk.
 - [x] Added a configurable geometry-aware alignment mode (`projective_distance`) alongside the Euclidean cosine baseline.
+- [x] Added paired Euclidean-vs-projective ablation workflows, manifests, and safety/risk comparison plots for perturbation reports.
 
 ## Updated Remaining Build
 
-1. Expand the dataset-profile layer with dataset-specific marker panels, reference presets, and manifests for real OKSM time-course datasets.
-2. Harden and validate the curvature-aware alignment mode on real OKSM datasets, including one-command paired ablations against the Euclidean baseline.
-3. Add dataset manifests and validation runs for fibroblast-to-iPSC / transient-OSKM studies.
-4. Expand visuals from static QA plots into trajectory-centric hyperbolic views and a lightweight interactive explorer.
-5. Tighten documentation around config profiles, benchmark datasets, and expected interpretation limits.
+1. Expand the dataset-backed validation bundle layer with track-specific manifests, expected timepoint contracts, and benchmark artifacts for fibroblast-to-iPSC and transient-partial-OSKM studies.
+2. Harden and validate the curvature-aware alignment mode on real OKSM datasets using the paired ablation workflow and track-specific metrics.
+3. Expand visuals from static QA plots into trajectory-centric hyperbolic views and a lightweight interactive explorer.
+4. Tighten documentation around config profiles, benchmark datasets, and expected interpretation limits.
+5. Refactor the HGNN stack toward more manifold-native operations once the validation loop is producing stable evidence.
 
 ---
 

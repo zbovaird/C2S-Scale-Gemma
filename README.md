@@ -378,6 +378,22 @@ uv run scripts/generate_oskm_perturbation_report.py \
   --ablation-manifest artifacts/alignment_ablation/ablation_manifest.json
 ```
 
+For named study validation, use the validation-bundle runner on top of those paired ablations:
+
+```bash
+uv run scripts/run_validation_bundle.py \
+  --track human_fibroblast_oskm \
+  --baseline-data-path data/raw/GSE242423.h5ad \
+  --perturbed-data-path artifacts/GSE242423_oskm_perturbed.h5ad \
+  --euclidean-config configs/colab_7b.toml \
+  --euclidean-checkpoint artifacts/euclidean/final_model.pt \
+  --projective-config configs/colab_7b.toml \
+  --projective-checkpoint artifacts/projective/final_model.pt \
+  --output-root artifacts/validation_bundle
+```
+
+This writes a track-specific `validation_bundle.json` plus the paired ablation outputs for the named study. The initial validation-track registry lives in `configs/validation_tracks.toml`.
+
 This produces:
 
 - `shift_histogram.png`

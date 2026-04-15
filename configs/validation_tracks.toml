@@ -1,0 +1,31 @@
+# Validation tracks for named OKSM / reprogramming studies.
+# These point to dataset profiles and expected study structure so
+# validation bundles can be generated reproducibly.
+
+[validation_tracks.human_fibroblast_oskm]
+title = "Human fibroblast OSKM reprogramming validation"
+dataset_profile = "gse242423_human_fibroblast_oskm"
+accession = "GSE242423"
+species = "human"
+source_url = "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE242423"
+baseline_data_hint = "data/raw/GSE242423.h5ad"
+perturbed_data_hint = "artifacts/GSE242423_oskm_perturbed.h5ad"
+cell_type_column = "cell_type"
+timepoint_column = "timepoint"
+expected_timepoints = ["D0", "D2", "D4", "D6", "D8", "D10", "D12", "D14", "iPSC"]
+primary_metrics = ["mean_l2_shift", "productive_fraction", "safe_fraction", "risk_fraction"]
+report_focus = "Compare Euclidean vs projective alignment on productive progression and safe partial reprogramming windows."
+
+[validation_tracks.mouse_transient_partial_oskm]
+title = "Mouse transient partial reprogramming validation"
+dataset_profile = "gse176206_mouse_transient_partial"
+accession = "GSE176206"
+species = "mouse"
+source_url = "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE176206"
+baseline_data_hint = "data/raw/GSE176206_adipo_screen.h5ad.gz"
+perturbed_data_hint = "artifacts/GSE176206_transient_oskm_perturbed.h5ad"
+cell_type_column = "cell_type"
+timepoint_column = "phase"
+expected_timepoints = ["baseline", "day3_induction", "day6_chase"]
+primary_metrics = ["mean_l2_shift", "productive_fraction", "safe_fraction", "risk_fraction"]
+report_focus = "Assess whether projective alignment improves safe rejuvenation signals without inflating pluripotency-risk cohorts."
