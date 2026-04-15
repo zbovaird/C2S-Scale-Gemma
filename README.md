@@ -394,6 +394,15 @@ uv run scripts/run_validation_bundle.py \
 
 This writes a track-specific `validation_bundle.json` plus the paired ablation outputs for the named study. The initial validation-track registry lives in `configs/validation_tracks.toml`.
 
+Summarize a finished validation bundle into a compact benchmark scorecard:
+
+```bash
+uv run scripts/summarize_validation_bundle.py \
+  --validation-manifest artifacts/validation_bundle/human_fibroblast_oskm/validation_bundle.json
+```
+
+This produces `validation_benchmark_summary.json` and `VALIDATION_BENCHMARK.md` for the named study.
+
 This produces:
 
 - `shift_histogram.png`
