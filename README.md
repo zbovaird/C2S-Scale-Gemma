@@ -465,6 +465,15 @@ uv run scripts/plot_validation_trajectory_projection.py \
 
 This produces branch-colored and safe-zone-colored scatter/arrow plots for each alignment run so the stage-wise reprogramming trajectories can be reviewed visually.
 
+Render a lightweight browser viewer from the same projection artifact:
+
+```bash
+uv run scripts/render_validation_trajectory_projection.py \
+  --projection-path artifacts/validation_bundle/human_fibroblast_oskm/validation_trajectory_projection.json
+```
+
+This writes `validation_trajectory_projection.html`, which lets you switch runs and recolor the projected trajectories by branch, safe zone, or timepoint in-browser.
+
 This produces:
 
 - `shift_histogram.png`
