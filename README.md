@@ -429,6 +429,15 @@ uv run scripts/export_validation_explorer.py \
 
 This writes `validation_explorer_payload.json`, which packages the run table, per-timepoint summaries, chart-ready trajectory series, delta rows, and recommendation evidence for lightweight interactive views or notebook dashboards.
 
+Render a self-contained HTML explorer from either the benchmark summary or the exported payload:
+
+```bash
+uv run scripts/render_validation_explorer.py \
+  --summary-path artifacts/validation_bundle/human_fibroblast_oskm/validation_benchmark_summary.json
+```
+
+This writes `validation_explorer.html`, which turns the bundle into a directly viewable trajectory dashboard with overview cards, run tables, chart panels, and auditable recommendation evidence.
+
 This produces:
 
 - `shift_histogram.png`
