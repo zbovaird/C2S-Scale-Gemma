@@ -474,6 +474,15 @@ uv run scripts/render_validation_trajectory_projection.py \
 
 This writes `validation_trajectory_projection.html`, which lets you switch runs and recolor the projected trajectories by branch, safe zone, or timepoint in-browser.
 
+Export the main validation summary, explorer, and trajectory artifacts in one pass:
+
+```bash
+uv run scripts/export_validation_bundle_artifacts.py \
+  --validation-manifest artifacts/validation_bundle/human_fibroblast_oskm/validation_bundle.json
+```
+
+This writes a consolidated artifact bundle including the benchmark summary, explorer payload and HTML, trajectory dataset, trajectory projection, projection HTML, and a small manifest of generated files.
+
 This produces:
 
 - `shift_histogram.png`
