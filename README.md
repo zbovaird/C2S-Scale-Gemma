@@ -447,6 +447,15 @@ uv run scripts/export_validation_trajectory_dataset.py \
 
 This writes `validation_trajectory_dataset.json`, which includes per-run cell rows, timepoint/branch cohorts, and per-cell projective-vs-Euclidean deltas for richer downstream trajectory analyses.
 
+Export 2D trajectory projections from the saved fused embeddings:
+
+```bash
+uv run scripts/export_validation_trajectory_projection.py \
+  --validation-manifest artifacts/validation_bundle/human_fibroblast_oskm/validation_bundle.json
+```
+
+This writes `validation_trajectory_projection.json`, which adds scatter/arrow-ready baseline and perturbed coordinates for each cell in a shared 2D PCA space per run.
+
 This produces:
 
 - `shift_histogram.png`
