@@ -456,6 +456,15 @@ uv run scripts/export_validation_trajectory_projection.py \
 
 This writes `validation_trajectory_projection.json`, which adds scatter/arrow-ready baseline and perturbed coordinates for each cell in a shared 2D PCA space per run.
 
+Render publication-style projection plots from that trajectory projection artifact:
+
+```bash
+uv run scripts/plot_validation_trajectory_projection.py \
+  --projection-path artifacts/validation_bundle/human_fibroblast_oskm/validation_trajectory_projection.json
+```
+
+This produces branch-colored and safe-zone-colored scatter/arrow plots for each alignment run so the stage-wise reprogramming trajectories can be reviewed visually.
+
 This produces:
 
 - `shift_histogram.png`
