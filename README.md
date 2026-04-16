@@ -427,7 +427,7 @@ uv run scripts/export_validation_explorer.py \
   --summary-path artifacts/validation_bundle/human_fibroblast_oskm/validation_benchmark_summary.json
 ```
 
-This writes `validation_explorer_payload.json`, which packages the run table, per-timepoint summaries, delta rows, and recommendation evidence for lightweight interactive views or notebook dashboards.
+This writes `validation_explorer_payload.json`, which packages the run table, per-timepoint summaries, chart-ready trajectory series, delta rows, and recommendation evidence for lightweight interactive views or notebook dashboards.
 
 This produces:
 

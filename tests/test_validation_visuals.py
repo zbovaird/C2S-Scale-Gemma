@@ -33,3 +33,17 @@ def test_build_timepoint_delta_series_returns_comparison_values():
 
     assert rows[0]["label"] == "projective"
     assert rows[0]["value"] == 0.3
+
+
+def test_build_timepoint_delta_series_defaults_missing_metadata():
+    rows = build_timepoint_delta_series(
+        {
+            "timepoint_comparison": [
+                {"delta_safe_fraction": 0.1},
+            ]
+        },
+        "delta_safe_fraction",
+    )
+
+    assert rows[0]["label"] == "unknown"
+    assert rows[0]["timepoint"] == "unknown"

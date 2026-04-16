@@ -29,8 +29,8 @@ def build_timepoint_delta_series(
     """Build ordered timepoint deltas for one comparison metric."""
     return [
         {
-            "label": row["label"],
-            "timepoint": row["timepoint"],
+            "label": str(row.get("label", "unknown")),
+            "timepoint": str(row.get("timepoint", "unknown")),
             "value": float(row.get(metric_key, 0.0)),
         }
         for row in summary.get("timepoint_comparison", [])

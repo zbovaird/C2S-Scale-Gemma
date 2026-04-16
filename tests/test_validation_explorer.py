@@ -1,4 +1,7 @@
-from eval.validation_explorer import build_validation_explorer_payload
+from eval.validation_explorer import (
+    build_validation_explorer_charts,
+    build_validation_explorer_payload,
+)
 
 
 def test_build_validation_explorer_payload_exposes_core_sections():
@@ -17,3 +20,27 @@ def test_build_validation_explorer_payload_exposes_core_sections():
     assert payload["overview_cards"][0]["value"] == "projective"
     assert payload["recommendation"]["status"] == "prefer_projective"
     assert payload["explorer_sections"][0]["id"] == "run_table"
+    assert payload["explorer_sections"][2]["id"] == "charts"
+
+
+def test_build_validation_explorer_charts_packages_plot_ready_series():
+    charts = build_validation_explorer_charts(
+        {
+            "timepoint_summaries": {
+                "euclidean": [{"timepoint": "D0", "safe_fraction": 0.1, "risk_fraction": 0.3}],
+                "projective": [{"timepoint": "D0", "safe_fraction": 0.2, "risk_fraction": 0.1}],
+            },
+            "timepoint_comparison": [
+                {
+                    "label": "projective",
+                    "timepoint": "D0",
+                    "delta_safe_fraction": 0.1,
+                    "delta_productive_fraction": 0.05,
+                }
+            ],
+        }
+    )
+
+    assert charts[1]["id"] == "safe_fraction_by_timepoint"
+    assert charts[1]["series"]["projective"][0]["value"] == 0.2
+    assert charts[3]["series"][0]["value"] == 0.1
