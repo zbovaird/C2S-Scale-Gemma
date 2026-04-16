@@ -117,6 +117,7 @@ c2s-validation-summary = "scripts.summarize_validation_bundle:main"
 c2s-validation-plots = "scripts.plot_validation_bundle:main"
 c2s-validation-explorer = "scripts.export_validation_explorer:main"
 c2s-validation-explorer-html = "scripts.render_validation_explorer:main"
+c2s-validation-trajectory-dataset = "scripts.export_validation_trajectory_dataset:main"
 c2s-perturbation-report = "scripts.generate_oskm_perturbation_report:main"
 
 [tool.hatch.build.targets.wheel]

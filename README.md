@@ -438,6 +438,15 @@ uv run scripts/render_validation_explorer.py \
 
 This writes `validation_explorer.html`, which turns the bundle into a directly viewable trajectory dashboard with overview cards, run tables, chart panels, and auditable recommendation evidence.
 
+Export a cell-level trajectory dataset for notebook analysis or publication-style plots:
+
+```bash
+uv run scripts/export_validation_trajectory_dataset.py \
+  --validation-manifest artifacts/validation_bundle/human_fibroblast_oskm/validation_bundle.json
+```
+
+This writes `validation_trajectory_dataset.json`, which includes per-run cell rows, timepoint/branch cohorts, and per-cell projective-vs-Euclidean deltas for richer downstream trajectory analyses.
+
 This produces:
 
 - `shift_histogram.png`
