@@ -14,6 +14,8 @@ from uhg.layers import UHGConv, UHGLayerNorm
 from uhg.nn import ProjectiveSAGEConv
 from uhg.projective import ProjectiveUHG
 
+from .manifold_ops import TangentSpaceLinear
+
 logger = logging.getLogger(__name__)
 
 
@@ -54,10 +56,10 @@ class UHGGraphSAGELayer(nn.Module):
         self.uhg = ProjectiveUHG()
         
         # Linear transformation for self features
-        self.self_linear = nn.Linear(in_features, out_features)
+        self.self_linear = TangentSpaceLinear(in_features, out_features)
         
         # Linear transformation for neighbor features
-        self.neighbor_linear = nn.Linear(in_features, out_features)
+        self.neighbor_linear = TangentSpaceLinear(in_features, out_features)
         
         # UHG layer normalization
         if use_uhg_norm:
@@ -221,9 +223,9 @@ class UHGGINLayer(nn.Module):
         
         # MLP for feature transformation
         self.mlp = nn.Sequential(
-            nn.Linear(in_features, out_features),
+            TangentSpaceLinear(in_features, out_features),
             nn.ReLU(),
-            nn.Linear(out_features, out_features)
+            TangentSpaceLinear(out_features, out_features)
         )
         
         # UHG layer normalization
@@ -358,10 +360,10 @@ class UHGAttentionLayer(nn.Module):
         self.uhg = ProjectiveUHG()
         
         # Linear transformations
-        self.query_linear = nn.Linear(in_features, out_features)
-        self.key_linear = nn.Linear(in_features, out_features)
-        self.value_linear = nn.Linear(in_features, out_features)
-        self.output_linear = nn.Linear(out_features, out_features)
+        self.query_linear = TangentSpaceLinear(in_features, out_features)
+        self.key_linear = TangentSpaceLinear(in_features, out_features)
+        self.value_linear = TangentSpaceLinear(in_features, out_features)
+        self.output_linear = TangentSpaceLinear(out_features, out_features)
         
         # Dropout
         self.dropout_layer = nn.Dropout(dropout)
