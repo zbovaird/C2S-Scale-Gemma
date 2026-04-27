@@ -48,6 +48,7 @@ Transform the C2S-Scale-Gemma hybrid architecture into a specialized tool for mo
 - [x] **Validation preflight / artifact QA:** Add preflight checks for validation inputs and QA checks for exported artifact bundles before treating a run as review-ready.
 - [x] **Interpretation-limit guardrails:** Carry explicit biological-claim limits into validation summaries, explorer payloads, and markdown reports.
 - [x] **Real-run review protocol:** Add an ordered protocol manifest for readiness, calibration, preflight, bundle execution, artifact export, QA, and interpretation review.
+- [x] **Manifold-readiness audit:** Add static reporting for Euclidean operations that must be reviewed before the HGNN stack is treated as manifold-native.
 - [ ] **Artifact review:** Use the one-command validation artifact export to review benchmark summaries, explorer HTML, shared trajectory projections, and cell-level trajectory deltas for real runs.
 - [ ] **HGNN / manifold layers:** Refactor the hyperbolic encoder path so Euclidean `torch.nn.Linear` (where it sits on the hyperbolic pathway) gives way to **`uhg` hyperbolic linear / manifold-native ops**, with **one** primary manifold (Lorentz vs Poincaré) end-to-end.
 - [ ] **Alignment script / losses:** Update contrastive alignment to use **hyperbolic distance** (e.g. `uhg.manifolds.Lorentz.dist` if Lorentz is the chosen model) instead of relying solely on `F.cosine_similarity` on embeddings that are not guaranteed to live in the same geometric space.
@@ -74,6 +75,7 @@ Transform the C2S-Scale-Gemma hybrid architecture into a specialized tool for mo
 - [x] Added interpretation-limit metadata to validation outputs so heuristic model findings stay separated from biological safety claims.
 - [x] Added calibration-audit reporting for heuristic window profiles and track-level recommendation thresholds.
 - [x] Added validation review protocol manifests so real dataset runs have an explicit go/no-go review sequence.
+- [x] Added manifold-readiness audit reports for identifying Euclidean operations on the geometry path before UHG refactoring.
 
 ## Updated Remaining Build
 

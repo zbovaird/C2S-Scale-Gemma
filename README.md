@@ -532,6 +532,13 @@ uv run scripts/build_validation_review_protocol.py \
   --output-root artifacts/validation_bundle/human_fibroblast_oskm
 ```
 
+Before refactoring the HGNN stack toward manifold-native operations, audit the current geometry path:
+
+```bash
+uv run scripts/report_manifold_readiness.py \
+  --output-path artifacts/manifold_readiness.json
+```
+
 This produces:
 
 - `shift_histogram.png`

@@ -126,6 +126,7 @@ c2s-validation-artifact-qa = "scripts.qa_validation_artifacts:main"
 c2s-validation-readiness = "scripts.report_validation_readiness:main"
 c2s-validation-calibration = "scripts.report_validation_calibration:main"
 c2s-validation-review-protocol = "scripts.build_validation_review_protocol:main"
+c2s-manifold-readiness = "scripts.report_manifold_readiness:main"
 c2s-perturbation-report = "scripts.generate_oskm_perturbation_report:main"
 
 [tool.hatch.build.targets.wheel]
