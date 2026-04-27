@@ -33,5 +33,19 @@ def test_info_nce_projective_distance_mode_returns_similarity_matrix():
     )(text, graph)
 
     assert loss_dict["alignment_mode"] == "projective_distance"
+    assert loss_dict["geometry_distance_backend"] in {
+        "projective_uhg_distance",
+        "euclidean_cdist_fallback",
+    }
     assert loss_dict["similarity_matrix"].shape == (2, 2)
     assert torch.isfinite(loss_dict["total_loss"])
+
+
+def test_info_nce_reports_euclidean_backend_for_cosine_mode():
+    text = torch.tensor([[1.0, 0.0], [0.0, 1.0]])
+    graph = text.clone()
+
+    loss_dict = InfoNCELoss(hard_negative_mining=False)(text, graph)
+
+    assert loss_dict["geometry_distance_backend"] == "euclidean_cosine"
+    assert loss_dict["geometry_fallback_used"] is False

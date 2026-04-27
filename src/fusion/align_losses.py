@@ -69,6 +69,7 @@ class InfoNCELoss(nn.Module):
             "projective_uhg",
         }
         self.uhg = ProjectiveUHG() if ProjectiveUHG is not None else None
+        self.geometry_distance_backend = "euclidean_cosine"
         self.text_to_geometry: Optional[nn.Module] = None
         self.graph_to_geometry: Optional[nn.Module] = None
         
@@ -124,6 +125,8 @@ class InfoNCELoss(nn.Module):
             'hard_negative_loss': hard_negative_loss,
             'similarity_matrix': similarity_matrix,
             'alignment_mode': self.alignment_mode,
+            'geometry_distance_backend': self.geometry_distance_backend,
+            'geometry_fallback_used': self.geometry_distance_backend.endswith("_fallback"),
         }
 
     def _compute_similarity_matrix(
@@ -132,6 +135,7 @@ class InfoNCELoss(nn.Module):
         graph_embeddings: torch.Tensor,
     ) -> torch.Tensor:
         if self.alignment_mode == "euclidean_cosine":
+            self.geometry_distance_backend = "euclidean_cosine"
             text_embeddings = F.normalize(text_embeddings, p=2, dim=1)
             graph_embeddings = F.normalize(graph_embeddings, p=2, dim=1)
             return torch.matmul(text_embeddings, graph_embeddings.t()) / self.temperature
@@ -180,8 +184,10 @@ class InfoNCELoss(nn.Module):
         graph_embeddings: torch.Tensor,
     ) -> torch.Tensor:
         if self.uhg is None:
+            self.geometry_distance_backend = "euclidean_cdist_fallback"
             return torch.cdist(text_embeddings, graph_embeddings, p=2)
 
+        self.geometry_distance_backend = "projective_uhg_distance"
         batch_size = text_embeddings.size(0)
         distances = torch.zeros(
             batch_size,
