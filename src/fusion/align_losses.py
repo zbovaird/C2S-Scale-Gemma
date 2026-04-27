@@ -42,6 +42,7 @@ class InfoNCELoss(nn.Module):
         graph_dim: Optional[int] = None,
         shared_dim: Optional[int] = None,
         text_projection_type: str = "learned",
+        require_geometry_backend: bool = False,
     ):
         """
         Initialize InfoNCE loss.
@@ -64,6 +65,7 @@ class InfoNCELoss(nn.Module):
         self.graph_dim = graph_dim
         self.shared_dim = shared_dim
         self.text_projection_type = text_projection_type
+        self.require_geometry_backend = require_geometry_backend
         self.requires_hyperbolic_graph_space = alignment_mode in {
             "projective_distance",
             "hyperbolic_distance",
@@ -185,6 +187,12 @@ class InfoNCELoss(nn.Module):
         graph_embeddings: torch.Tensor,
     ) -> torch.Tensor:
         if self.uhg is None:
+            if self.require_geometry_backend:
+                raise RuntimeError(
+                    "Geometry-aware alignment requires the UHG distance backend, "
+                    "but it is unavailable. Disable require_geometry_backend to allow "
+                    "the Euclidean fallback."
+                )
             self.geometry_distance_backend = "euclidean_cdist_fallback"
             return torch.cdist(text_embeddings, graph_embeddings, p=2)
 

@@ -261,6 +261,9 @@ def run_embedding_comparison(
                 "text_projection_type",
                 "learned",
             ),
+            require_geometry_backend=bool(
+                config.get("fusion", {}).get("require_geometry_backend", False)
+            ),
         ),
         device=device,
         config=config,
@@ -390,6 +393,9 @@ def run_embedding_comparison(
             "text_projection_type": config.get("fusion", {}).get(
                 "text_projection_type",
                 "learned",
+            ),
+            "require_geometry_backend": bool(
+                config.get("fusion", {}).get("require_geometry_backend", False)
             ),
             **alignment_backend,
             "fusion_graph_source": baseline_embeddings.get("fusion_graph_source"),

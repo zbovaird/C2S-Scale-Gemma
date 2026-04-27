@@ -68,3 +68,23 @@ def test_info_nce_uses_tangent_adapter_when_graph_dim_needs_projection():
 
     assert isinstance(loss.graph_to_geometry, TangentSpaceLinear)
     assert loss_dict["similarity_matrix"].shape == (2, 2)
+
+
+def test_info_nce_strict_geometry_backend_raises_when_uhg_unavailable():
+    text = torch.tensor([[1.0, 0.2], [0.1, 1.0]], dtype=torch.float32)
+    graph = torch.tensor([[0.9, 0.1], [0.2, 0.8]], dtype=torch.float32)
+    loss = InfoNCELoss(
+        hard_negative_mining=False,
+        alignment_mode="projective_distance",
+        shared_dim=2,
+        text_projection_type="linear",
+        require_geometry_backend=True,
+    )
+    loss.uhg = None
+
+    try:
+        loss(text, graph)
+    except RuntimeError as exc:
+        assert "requires the UHG distance backend" in str(exc)
+    else:
+        raise AssertionError("Strict geometry backend should reject Euclidean fallback.")

@@ -26,6 +26,7 @@ align_loss = "infonce"
 alignment_mode = "euclidean_cosine"
 alignment_dim = 384
 text_projection_type = "learned"
+require_geometry_backend = false
 align_weight = 1.0
 hard_negatives = true
 
