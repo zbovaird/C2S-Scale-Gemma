@@ -121,6 +121,9 @@ def main() -> None:
                 "geometry_fallback_used": result["overlay_summary"]
                 .get("alignment", {})
                 .get("geometry_fallback_used"),
+                "primary_manifold": result["overlay_summary"]
+                .get("alignment", {})
+                .get("primary_manifold"),
                 "fusion_graph_source": result["overlay_summary"]
                 .get("alignment", {})
                 .get("fusion_graph_source"),

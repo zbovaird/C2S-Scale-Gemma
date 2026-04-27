@@ -64,6 +64,7 @@ def write_markdown_summary(output_path: Path, summary: dict) -> None:
             f"productive_fraction={row['productive_fraction']:.4f}, "
             f"safe_fraction={row['safe_fraction']:.4f}, "
             f"risk_fraction={row['risk_fraction']:.4f}, "
+            f"primary_manifold={row.get('primary_manifold')}, "
             f"geometry_backend={row.get('geometry_distance_backend')}, "
             f"geometry_fallback_used={row.get('geometry_fallback_used')}, "
             f"alignment_graph_source={row.get('alignment_graph_source')}"

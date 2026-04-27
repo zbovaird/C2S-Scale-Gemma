@@ -44,6 +44,10 @@ def build_validation_benchmark_rows(
         row = {
             "label": payload.get("label", "unknown"),
             "alignment_mode": payload.get("alignment_mode", "unknown"),
+            "primary_manifold": payload.get(
+                "primary_manifold",
+                alignment_summary.get("primary_manifold"),
+            ),
             "geometry_distance_backend": payload.get(
                 "geometry_distance_backend",
                 alignment_summary.get("geometry_distance_backend"),

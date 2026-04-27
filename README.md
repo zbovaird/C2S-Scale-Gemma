@@ -486,6 +486,7 @@ The benchmark summary includes a compact trajectory geometry section with mean/m
 The validation explorer payload and HTML render the same trajectory geometry summary as a table for quick review.
 The benchmark summary and explorer artifacts include interpretation-limit notes so projection views, heuristic safe-window calls, and alignment recommendations are kept separate from biological or in vivo safety claims.
 Run rows also include the geometry distance backend and graph embedding source, making it visible when a projective alignment run used UHG distance versus a Euclidean fallback and whether alignment consumed hyperbolic or projected graph embeddings.
+Set `fusion.primary_manifold = "projective_uhg"` to keep the current geometry path on the configured projective-UHG backend.
 Set `fusion.require_geometry_backend = true` for validation runs that should fail fast instead of allowing the Euclidean fallback for projective/hyperbolic alignment modes.
 
 Review a completed export bundle before treating it as interpretation-ready:

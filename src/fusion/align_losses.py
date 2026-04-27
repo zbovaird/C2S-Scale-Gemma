@@ -11,13 +11,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-try:
-    from uhg.projective import ProjectiveUHG
-except Exception:  # pragma: no cover - optional runtime dependency
-    ProjectiveUHG = None
-
 from uhg_adapters.euclid_to_uhg import EuclideanToUHG
-from hgnn.manifold_ops import TangentSpaceLinear
+from hgnn.manifold_ops import ProjectiveManifoldBackend, TangentSpaceLinear
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +38,7 @@ class InfoNCELoss(nn.Module):
         shared_dim: Optional[int] = None,
         text_projection_type: str = "learned",
         require_geometry_backend: bool = False,
+        primary_manifold: str = "projective_uhg",
     ):
         """
         Initialize InfoNCE loss.
@@ -66,13 +62,19 @@ class InfoNCELoss(nn.Module):
         self.shared_dim = shared_dim
         self.text_projection_type = text_projection_type
         self.require_geometry_backend = require_geometry_backend
+        self.manifold_backend = ProjectiveManifoldBackend(
+            primary_manifold=primary_manifold,
+            require_backend=require_geometry_backend,
+        )
+        self.primary_manifold = self.manifold_backend.primary_manifold
         self.requires_hyperbolic_graph_space = alignment_mode in {
             "projective_distance",
             "hyperbolic_distance",
             "projective_uhg",
         }
-        self.uhg = ProjectiveUHG() if ProjectiveUHG is not None else None
+        self.uhg = self.manifold_backend.uhg
         self.geometry_distance_backend = "euclidean_cosine"
+        self.geometry_fallback_used = False
         self.text_to_geometry: Optional[nn.Module] = None
         self.graph_to_geometry: Optional[nn.Module] = None
         
@@ -128,8 +130,9 @@ class InfoNCELoss(nn.Module):
             'hard_negative_loss': hard_negative_loss,
             'similarity_matrix': similarity_matrix,
             'alignment_mode': self.alignment_mode,
+            'primary_manifold': self.primary_manifold,
             'geometry_distance_backend': self.geometry_distance_backend,
-            'geometry_fallback_used': self.geometry_distance_backend.endswith("_fallback"),
+            'geometry_fallback_used': self.geometry_fallback_used,
         }
 
     def _compute_similarity_matrix(
@@ -139,6 +142,7 @@ class InfoNCELoss(nn.Module):
     ) -> torch.Tensor:
         if self.alignment_mode == "euclidean_cosine":
             self.geometry_distance_backend = "euclidean_cosine"
+            self.geometry_fallback_used = False
             text_embeddings = F.normalize(text_embeddings, p=2, dim=1)
             graph_embeddings = F.normalize(graph_embeddings, p=2, dim=1)
             return torch.matmul(text_embeddings, graph_embeddings.t()) / self.temperature
@@ -186,26 +190,13 @@ class InfoNCELoss(nn.Module):
         text_embeddings: torch.Tensor,
         graph_embeddings: torch.Tensor,
     ) -> torch.Tensor:
-        if self.uhg is None:
-            if self.require_geometry_backend:
-                raise RuntimeError(
-                    "Geometry-aware alignment requires the UHG distance backend, "
-                    "but it is unavailable. Disable require_geometry_backend to allow "
-                    "the Euclidean fallback."
-                )
-            self.geometry_distance_backend = "euclidean_cdist_fallback"
-            return torch.cdist(text_embeddings, graph_embeddings, p=2)
-
-        self.geometry_distance_backend = "projective_uhg_distance"
-        batch_size = text_embeddings.size(0)
-        distances = torch.zeros(
-            batch_size,
-            graph_embeddings.size(0),
-            device=text_embeddings.device,
+        self.manifold_backend.uhg = self.uhg
+        distances, backend_name, fallback_used = self.manifold_backend.pairwise_distance(
+            text_embeddings,
+            graph_embeddings,
         )
-        for i in range(batch_size):
-            for j in range(graph_embeddings.size(0)):
-                distances[i, j] = self.uhg.distance(text_embeddings[i], graph_embeddings[j])
+        self.geometry_distance_backend = backend_name
+        self.geometry_fallback_used = fallback_used
         return distances
     
     def _compute_infonce_loss(

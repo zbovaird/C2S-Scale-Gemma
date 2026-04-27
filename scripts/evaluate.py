@@ -542,6 +542,10 @@ def main():
                     "text_projection_type",
                     "learned",
                 ),
+                primary_manifold=config.get("fusion", {}).get(
+                    "primary_manifold",
+                    "projective_uhg",
+                ),
             ),
             device=device,
         )

@@ -57,6 +57,7 @@ Transform the C2S-Scale-Gemma hybrid architecture into a specialized tool for mo
 - [x] **Layer tangent adapters:** Replace anonymous Euclidean feature maps in UHG GraphSAGE, GIN, and attention layers with explicit tangent-space adapters.
 - [x] **Alignment tangent adapter:** Replace the alignment graph-dimension projection fallback with an explicit tangent-space adapter.
 - [x] **Strict geometry backend option:** Add a config-driven fail-fast mode for projective/hyperbolic alignment when the UHG distance backend is unavailable.
+- [x] **Primary manifold selection:** Centralize the configured validation/alignment manifold as `projective_uhg` so unsupported manifold names fail explicitly instead of mixing geometry assumptions silently.
 - [x] **Readiness progress accounting:** Extend the manifold-readiness audit to report resolved tangent adapter coverage alongside remaining findings.
 - [x] **Trajectory geometry artifact:** Export per-cell validation trajectory geometry distances alongside shared-PCA projection artifacts.
 - [x] **Trajectory geometry summary:** Add compact mean/max geometry-distance summaries to validation benchmark artifacts.
@@ -70,7 +71,7 @@ Transform the C2S-Scale-Gemma hybrid architecture into a specialized tool for mo
 - [x] **Artifact review report:** Add a content-level review report for exported validation bundles covering interpretation limits, recommendation status, fallback geometry, risk signals, and trajectory geometry coverage.
 - [ ] **Artifact review:** Use the one-command validation artifact export to review benchmark summaries, explorer HTML, shared trajectory projections, and cell-level trajectory deltas for real runs.
 - [ ] **HGNN / manifold layers:** Refactor the hyperbolic encoder path so Euclidean `torch.nn.Linear` (where it sits on the hyperbolic pathway) gives way to **`uhg` hyperbolic linear / manifold-native ops**, with **one** primary manifold (Lorentz vs Poincaré) end-to-end.
-- [ ] **Alignment script / losses:** Update contrastive alignment to use **hyperbolic distance** (e.g. `uhg.manifolds.Lorentz.dist` if Lorentz is the chosen model) instead of relying solely on `F.cosine_similarity` on embeddings that are not guaranteed to live in the same geometric space.
+- [x] **Alignment script / losses:** Update contrastive alignment to use the configured **projective-UHG distance** path for geometry-aware runs, with explicit backend/fallback and primary-manifold metadata instead of relying solely on `F.cosine_similarity`.
 - [ ] **Data prep (PBMC / screening):** Isolate cells that **share regulatory pathways** with Yamanaka factors to stress-test “root-finding” before full reprogramming series are treated as biological evidence.
 
 ## Progress So Far
@@ -103,6 +104,7 @@ Transform the C2S-Scale-Gemma hybrid architecture into a specialized tool for mo
 - [x] Added explicit `TangentSpaceLinear` adapters for UHG layer self/neighbor, MLP, and attention projections.
 - [x] Added an explicit `TangentSpaceLinear` adapter for graph-to-geometry projection inside geometry-aware InfoNCE alignment.
 - [x] Added `fusion.require_geometry_backend` so validation runs can reject Euclidean fallback distance for geometry-aware alignment.
+- [x] Centralized the alignment manifold backend around `projective_uhg` and reject unsupported primary manifold names explicitly.
 - [x] Added resolved-adapter counts to manifold-readiness reports so geometry refactor progress is visible in audit artifacts.
 - [x] Added validation trajectory geometry-distance artifacts with backend/fallback metadata for per-cell baseline-to-perturbed movement.
 - [x] Added compact trajectory geometry summaries to validation benchmark JSON and Markdown reports.

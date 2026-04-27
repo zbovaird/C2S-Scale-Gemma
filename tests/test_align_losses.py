@@ -34,6 +34,7 @@ def test_info_nce_projective_distance_mode_returns_similarity_matrix():
     )(text, graph)
 
     assert loss_dict["alignment_mode"] == "projective_distance"
+    assert loss_dict["primary_manifold"] == "projective_uhg"
     assert loss_dict["geometry_distance_backend"] in {
         "projective_uhg_distance",
         "euclidean_cdist_fallback",
@@ -85,6 +86,19 @@ def test_info_nce_strict_geometry_backend_raises_when_uhg_unavailable():
     try:
         loss(text, graph)
     except RuntimeError as exc:
-        assert "requires the UHG distance backend" in str(exc)
+        assert "requires the projective UHG backend" in str(exc)
     else:
         raise AssertionError("Strict geometry backend should reject Euclidean fallback.")
+
+
+def test_info_nce_rejects_unknown_primary_manifold():
+    try:
+        InfoNCELoss(
+            hard_negative_mining=False,
+            alignment_mode="projective_distance",
+            primary_manifold="lorentz",
+        )
+    except ValueError as exc:
+        assert "Unsupported primary manifold" in str(exc)
+    else:
+        raise AssertionError("Unknown primary manifolds should fail explicitly.")

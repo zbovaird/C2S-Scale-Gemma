@@ -200,12 +200,22 @@ def _probe_alignment_backend(
         return {
             "geometry_distance_backend": "unavailable",
             "geometry_fallback_used": None,
+            "primary_manifold": getattr(
+                trainer.contrastive_loss,
+                "primary_manifold",
+                None,
+            ),
         }
     batch_size = min(int(text_embeddings.size(0)), int(graph_embeddings.size(0)), 4)
     if batch_size == 0:
         return {
             "geometry_distance_backend": "unavailable",
             "geometry_fallback_used": None,
+            "primary_manifold": getattr(
+                trainer.contrastive_loss,
+                "primary_manifold",
+                None,
+            ),
         }
     with torch.no_grad():
         loss_output = trainer.contrastive_loss(
@@ -215,6 +225,7 @@ def _probe_alignment_backend(
     return {
         "geometry_distance_backend": loss_output.get("geometry_distance_backend"),
         "geometry_fallback_used": bool(loss_output.get("geometry_fallback_used", False)),
+        "primary_manifold": loss_output.get("primary_manifold"),
     }
 
 
@@ -263,6 +274,10 @@ def run_embedding_comparison(
             ),
             require_geometry_backend=bool(
                 config.get("fusion", {}).get("require_geometry_backend", False)
+            ),
+            primary_manifold=config.get("fusion", {}).get(
+                "primary_manifold",
+                "projective_uhg",
             ),
         ),
         device=device,
