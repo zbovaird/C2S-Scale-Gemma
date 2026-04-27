@@ -497,6 +497,15 @@ uv run scripts/report_validation_readiness.py \
 
 This flags each validation track as `ready`, `needs_data`, or `incomplete_metadata` based on profile metadata and local baseline/perturbed data availability.
 
+Generate an acquisition-oriented manifest for the configured validation datasets:
+
+```bash
+uv run scripts/build_validation_data_manifest.py \
+  --output-path artifacts/validation_data_manifest.json
+```
+
+This lists accessions, source URLs, expected observation columns, expected timepoints, and local baseline/perturbed data targets for each validation track.
+
 Audit profile and recommendation thresholds before treating validation outputs as calibrated:
 
 ```bash
