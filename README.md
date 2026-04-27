@@ -483,7 +483,16 @@ uv run scripts/export_validation_bundle_artifacts.py \
 
 This writes a consolidated artifact bundle including the benchmark summary, explorer payload and HTML, trajectory dataset, trajectory projection, projection HTML, and a small manifest of generated files.
 
-Before a real validation run, the bundle runner now performs preflight checks for the selected track, input datasets, configs, checkpoints, and dataset-profile registry. To run those checks without model execution:
+Before a real validation run, generate a readiness report for the configured validation tracks and dataset profiles:
+
+```bash
+uv run scripts/report_validation_readiness.py \
+  --output-path artifacts/validation_readiness.json
+```
+
+This flags each validation track as `ready`, `needs_data`, or `incomplete_metadata` based on profile metadata and local baseline/perturbed data availability.
+
+The bundle runner also performs preflight checks for the selected track, input datasets, configs, checkpoints, and dataset-profile registry. To run those checks without model execution:
 
 ```bash
 uv run scripts/run_validation_bundle.py \
