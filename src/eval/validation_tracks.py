@@ -14,6 +14,12 @@ def load_validation_track_registry(config_path: str | Path) -> Dict[str, Any]:
         return tomllib.load(handle)
 
 
+def list_validation_dataset_candidates(config_path: str | Path) -> Dict[str, Any]:
+    """Load candidate validation datasets that are not yet runnable tracks."""
+    registry = load_validation_track_registry(config_path)
+    return dict(registry.get("validation_dataset_candidates", {}))
+
+
 def resolve_validation_track(
     track_name: str,
     config_path: str | Path,

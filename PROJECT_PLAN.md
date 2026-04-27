@@ -121,6 +121,12 @@ Transform the C2S-Scale-Gemma hybrid architecture into a specialized tool for mo
 
 - **First downloadable validation target:** `GSE176206_adipo_screen.h5ad.gz` from `GSE176206` (`Mouse transient partial reprogramming validation`). GEO lists this as a processed H5AD artifact for the transient OSKM/partial-reprogramming screen, and the current config expects it at `data/raw/GSE176206_adipo_screen.h5ad.gz`.
 - **Configured human validation target:** `GSE242423` (`Human fibroblast OSKM reprogramming validation`). Treat this as a strong target, but confirm processed count/AnnData availability from the associated resource before relying on it, because the GEO record notes that raw data are not provided due to patient privacy.
+- **Curated candidate registry:** broader public datasets now live in `configs/validation_tracks.toml` under `validation_dataset_candidates`; `scripts/build_validation_data_manifest.py` carries them into review-only manifest rows without downloading data.
+- **Primary OSKM trajectory benchmark:** Waddington-OT MEF to iPSC (`GSE106664`, Broad SCP30; Schiebinger et al. 2019) provides a dense mouse OSKM 10x time course with stochastic, elite, and dead-end lineages for trajectory-model validation.
+- **Human multi-modal OSKM trajectory:** Diversification of Human Reprogramming (`GSE137278`, PMC7486102; Xie et al. 2020) provides HFF-to-iPSC scRNA/scATAC timepoints for human trajectory and regulatory-network validation.
+- **Non-viral comparison:** Chemical Reprogramming Atlas (`GSE178325` scRNA, `GSE178324` scATAC; Guan et al. 2022) should be used as a protocol-aware comparison for chemical CiPSC and regeneration-like intermediate states.
+- **Partial-reprogramming / aging benchmarks:** Browder et al. 2022 in vivo cyclic OSKM (`GSE183177`) is useful for transcriptomic age-reversal checks but is mostly bulk RNA-seq; Tabula Muris Senis (`GSE132042`, CellxGene) is a large mouse aging atlas for clock and starting-state benchmarks.
+- **Negative and stability controls:** Treutlein et al. 2016 direct MEF-to-neuron conversion (`GSE67315`, BAM factors) should remain a trans-differentiation negative control, and Zheng et al. 2017 10x 68k PBMC should remain a high-variance non-reprogramming stability control.
 
 ## Post-Build Validation Stages
 

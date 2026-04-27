@@ -45,3 +45,154 @@ min_productive_fraction_gain = 0.03
 max_risk_fraction_increase = 0.02
 max_mean_l2_shift_increase = 0.08
 min_timepoint_safe_gains = 1
+
+[validation_dataset_candidates.waddington_ot_mef_to_ipsc]
+title = "Waddington-OT MEF to iPSC"
+study = "Schiebinger et al. 2019"
+accessions = ["GSE106664"]
+portal_accessions = ["SCP30"]
+publication = "Schiebinger et al. 2019"
+species = "mouse"
+trajectory = "MEF to iPSC"
+induction = "OSKM polycistronic lentivirus"
+timepoints = ["D0-D18 every 12h", "18 timepoints"]
+modalities = ["scRNA-seq 10x"]
+format_hints = ["H5AD", "Matrix Market", "Loom", "processed ~2GB"]
+source_urls = [
+  "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE106664",
+  "https://singlecell.broadinstitute.org/single_cell/study/SCP30",
+]
+local_data_hint = "data/raw/GSE106664_waddington_ot.h5ad"
+validation_role = "Trajectory validation baseline for stochastic, elite, and dead-end lineages; useful for optimal transport and neural ODE trajectory models."
+strengths = "Large, densely sampled OSKM single-cell time course with approximately 315k cells."
+limitations = "Mouse MEF biology differs from human fibroblast reprogramming."
+notes = "Do not download automatically; review processed file size and format before acquisition."
+
+[validation_dataset_candidates.human_reprogramming_diversification]
+title = "Diversification of Human Reprogramming"
+study = "Xie et al. 2020"
+accessions = ["GSE137278"]
+portal_accessions = ["PMC7486102"]
+publication = "Xie et al. 2020"
+species = "human"
+trajectory = "HFF to iPSC"
+induction = "OSKM"
+timepoints = ["D0", "D3", "D7", "D10", "D13", "iPSC"]
+modalities = ["scRNA-seq", "scATAC-seq"]
+format_hints = ["Processed GEO matrices"]
+source_urls = [
+  "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE137278",
+  "https://pmc.ncbi.nlm.nih.gov/articles/PMC7486102/",
+]
+local_data_hint = "data/raw/GSE137278_human_reprogramming_multiome/"
+validation_role = "Human multi-modal trajectory and regulatory-network validation."
+strengths = "Excellent human OSKM trajectory with paired regulatory-state evidence."
+limitations = "Requires multiome-aware handling before treating as a direct single-cell RNA validation track."
+notes = "Prefer for regulatory-network validation after the core RNA-only workflow is stable."
+
+[validation_dataset_candidates.chemical_reprogramming_atlas]
+title = "Chemical Reprogramming Atlas"
+study = "Guan et al. 2022"
+accessions = ["GSE178325", "GSE178324"]
+portal_accessions = []
+publication = "Guan et al. 2022"
+species = "human"
+trajectory = "Fibroblast or somatic cells to chemically induced pluripotent stem cells"
+induction = "Chemical cocktail, non-genetic"
+timepoints = ["D0-D40+", "plastic state"]
+modalities = ["scRNA-seq", "scATAC-seq"]
+format_hints = ["Processed H5AD", "Matrix files on GEO"]
+source_urls = [
+  "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE178325",
+  "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE178324",
+]
+local_data_hint = "data/raw/Guan2022_chemical_reprogramming_atlas/"
+validation_role = "Non-viral chemical comparison and regeneration-like intermediate-state benchmark."
+strengths = "Separates non-genetic reprogramming dynamics from viral OSKM-specific effects."
+limitations = "Chemical protocol differs from OSKM induction and should not be merged into OSKM tracks without explicit protocol labels."
+notes = "Use as comparison data once protocol-aware grouping is available."
+
+[validation_dataset_candidates.in_vivo_partial_reprogramming]
+title = "In Vivo Partial Reprogramming"
+study = "Browder et al. 2022"
+accessions = ["GSE183177"]
+portal_accessions = []
+publication = "Nature Aging, Browder et al. 2022"
+species = "mouse"
+trajectory = "Multiple tissues under cyclic in vivo partial reprogramming"
+induction = "Cyclic OSKM transgenic"
+timepoints = ["cyclic OSKM treatment"]
+modalities = ["bulk RNA-seq"]
+format_hints = ["Processed GEO files"]
+source_urls = [
+  "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE183177",
+]
+local_data_hint = "data/raw/GSE183177_browder_partial_reprogramming/"
+validation_role = "Transcriptomic age-reversal benchmark across skin, kidney, and spleen."
+strengths = "Useful partial-reprogramming and tissue-aging benchmark."
+limitations = "Mostly bulk RNA-seq; not a primary single-cell trajectory validation dataset."
+notes = "Use for age-reversal signal checks, not cell-level trajectory claims."
+
+[validation_dataset_candidates.direct_lineage_conversion_control]
+title = "Direct Lineage Conversion Negative Control"
+study = "Treutlein et al. 2016"
+accessions = ["GSE67315"]
+portal_accessions = []
+publication = "Treutlein et al. 2016"
+species = "mouse"
+trajectory = "MEF to induced neurons"
+induction = "BAM factors Ascl1, Brn2, Myt1l"
+timepoints = ["direct conversion time course"]
+modalities = ["scRNA-seq"]
+format_hints = ["GEO processed files"]
+source_urls = [
+  "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE67315",
+]
+local_data_hint = "data/raw/GSE67315_direct_lineage_conversion/"
+validation_role = "Negative control for distinguishing iPSC de-differentiation from trans-differentiation."
+strengths = "Challenges the model with lineage conversion rather than pluripotency reprogramming."
+limitations = "Not an OSKM or partial-reprogramming dataset."
+notes = "Keep separate from positive OSKM trajectory metrics."
+
+[validation_dataset_candidates.tabula_muris_senis]
+title = "Tabula Muris Senis"
+study = "Tabula Muris Consortium"
+accessions = ["GSE132042"]
+portal_accessions = ["CellxGene Explorer"]
+publication = "Tabula Muris Senis"
+species = "mouse"
+trajectory = "Aging reference atlas across 23 organs"
+induction = "None"
+timepoints = ["1-30 months"]
+modalities = ["scRNA-seq"]
+format_hints = ["H5AD via AWS or CellxGene", "~30GB"]
+source_urls = [
+  "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE132042",
+  "https://cellxgene.cziscience.com/",
+]
+local_data_hint = "data/raw/GSE132042_tabula_muris_senis.h5ad"
+validation_role = "Aging benchmark for biological clocks and starting-state pools."
+strengths = "Broad multi-organ age reference for mouse starting-state and biological-age baselines."
+limitations = "Large atlas; not a reprogramming perturbation dataset."
+notes = "Use after storage and sampling strategy are planned."
+
+[validation_dataset_candidates.zheng_68k_pbmc_control]
+title = "10x 68k PBMC"
+study = "Zheng et al. 2017"
+accessions = []
+portal_accessions = ["10x Genomics Dataset Portal"]
+publication = "Zheng et al. 2017"
+species = "human"
+trajectory = "PBMC non-reprogramming control"
+induction = "None"
+timepoints = ["single baseline"]
+modalities = ["scRNA-seq 10x"]
+format_hints = ["10x Matrix Market", "H5"]
+source_urls = [
+  "https://www.10xgenomics.com/datasets/68-k-pbm-cs-fresh-donor-1-standard-1-1-0",
+]
+local_data_hint = "data/raw/10x_68k_pbmc/"
+validation_role = "High-variance non-reprogramming negative and embedding-stability control."
+strengths = "Widely used human single-cell control with substantial cell-count variance."
+limitations = "Not an aging or reprogramming dataset."
+notes = "Use as a stability control, not as evidence for OSKM biology."
