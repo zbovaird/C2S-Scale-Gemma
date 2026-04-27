@@ -3,6 +3,7 @@ import json
 from eval.manifold_readiness import (
     audit_file_for_patterns,
     build_manifold_readiness_report,
+    count_resolved_adapters,
     write_manifold_readiness_report,
 )
 
@@ -51,6 +52,44 @@ def test_build_manifold_readiness_report_counts_blockers_and_warnings(tmp_path):
     assert report["status"] == "needs_refactor"
     assert report["n_blockers"] == 1
     assert report["n_warnings"] == 1
+
+
+def test_build_manifold_readiness_report_counts_resolved_adapters(tmp_path):
+    encoder = tmp_path / "encoder.py"
+    encoder.write_text(
+        "self.input_projection = TangentSpaceLinear(1, 2)\n"
+        "self.output_projection = TangentSpaceLinear(2, 3)\n",
+        encoding="utf-8",
+    )
+
+    report = build_manifold_readiness_report(
+        repo_root=tmp_path,
+        targets=[],
+        resolved_targets=[
+            {
+                "path": "encoder.py",
+                "pattern": r"TangentSpaceLinear",
+                "description": "Resolved adapters.",
+            }
+        ],
+    )
+
+    assert report["n_resolved_adapters"] == 2
+    assert report["resolved_adapters"][0]["count"] == 2
+
+
+def test_count_resolved_adapters_returns_zero_for_missing_file(tmp_path):
+    rows = count_resolved_adapters(
+        repo_root=tmp_path,
+        targets=[
+            {
+                "path": "missing.py",
+                "pattern": r"TangentSpaceLinear",
+            }
+        ],
+    )
+
+    assert rows[0]["count"] == 0
 
 
 def test_write_manifold_readiness_report_writes_json(tmp_path):

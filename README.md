@@ -541,6 +541,8 @@ uv run scripts/report_manifold_readiness.py \
   --output-path artifacts/manifold_readiness.json
 ```
 
+The readiness report includes unresolved findings and resolved `TangentSpaceLinear` adapter counts so geometry-path cleanup progress is auditable over time.
+
 Convert the readiness findings into an ordered implementation plan:
 
 ```bash

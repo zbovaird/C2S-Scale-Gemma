@@ -57,6 +57,7 @@ Transform the C2S-Scale-Gemma hybrid architecture into a specialized tool for mo
 - [x] **Layer tangent adapters:** Replace anonymous Euclidean feature maps in UHG GraphSAGE, GIN, and attention layers with explicit tangent-space adapters.
 - [x] **Alignment tangent adapter:** Replace the alignment graph-dimension projection fallback with an explicit tangent-space adapter.
 - [x] **Strict geometry backend option:** Add a config-driven fail-fast mode for projective/hyperbolic alignment when the UHG distance backend is unavailable.
+- [x] **Readiness progress accounting:** Extend the manifold-readiness audit to report resolved tangent adapter coverage alongside remaining findings.
 - [ ] **Artifact review:** Use the one-command validation artifact export to review benchmark summaries, explorer HTML, shared trajectory projections, and cell-level trajectory deltas for real runs.
 - [ ] **HGNN / manifold layers:** Refactor the hyperbolic encoder path so Euclidean `torch.nn.Linear` (where it sits on the hyperbolic pathway) gives way to **`uhg` hyperbolic linear / manifold-native ops**, with **one** primary manifold (Lorentz vs Poincaré) end-to-end.
 - [ ] **Alignment script / losses:** Update contrastive alignment to use **hyperbolic distance** (e.g. `uhg.manifolds.Lorentz.dist` if Lorentz is the chosen model) instead of relying solely on `F.cosine_similarity` on embeddings that are not guaranteed to live in the same geometric space.
@@ -92,6 +93,7 @@ Transform the C2S-Scale-Gemma hybrid architecture into a specialized tool for mo
 - [x] Added explicit `TangentSpaceLinear` adapters for UHG layer self/neighbor, MLP, and attention projections.
 - [x] Added an explicit `TangentSpaceLinear` adapter for graph-to-geometry projection inside geometry-aware InfoNCE alignment.
 - [x] Added `fusion.require_geometry_backend` so validation runs can reject Euclidean fallback distance for geometry-aware alignment.
+- [x] Added resolved-adapter counts to manifold-readiness reports so geometry refactor progress is visible in audit artifacts.
 
 ## Updated Remaining Build
 

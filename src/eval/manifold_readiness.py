@@ -35,6 +35,24 @@ DEFAULT_MANIFOLD_AUDIT_TARGETS = (
     },
 )
 
+DEFAULT_RESOLVED_ADAPTER_TARGETS = (
+    {
+        "path": "src/hgnn/encoder.py",
+        "pattern": r"TangentSpaceLinear",
+        "description": "Explicit tangent-space adapters in UHG encoder projections.",
+    },
+    {
+        "path": "src/hgnn/layers.py",
+        "pattern": r"TangentSpaceLinear",
+        "description": "Explicit tangent-space adapters in UHG layer transforms.",
+    },
+    {
+        "path": "src/fusion/align_losses.py",
+        "pattern": r"TangentSpaceLinear",
+        "description": "Explicit tangent-space adapter in alignment graph projection.",
+    },
+)
+
 
 def audit_file_for_patterns(
     *,
@@ -72,10 +90,35 @@ def audit_file_for_patterns(
     return findings
 
 
+def count_resolved_adapters(
+    *,
+    repo_root: str | Path,
+    targets: Sequence[Mapping[str, Any]] = DEFAULT_RESOLVED_ADAPTER_TARGETS,
+) -> list[dict]:
+    """Count explicit tangent-space adapter coverage in audited files."""
+    rows = []
+    for target in targets:
+        path = Path(repo_root) / str(target["path"])
+        count = 0
+        if path.exists():
+            source = path.read_text(encoding="utf-8")
+            count = len(re.findall(str(target["pattern"]), source))
+        rows.append(
+            {
+                "path": str(target["path"]),
+                "pattern": str(target["pattern"]),
+                "description": target.get("description"),
+                "count": count,
+            }
+        )
+    return rows
+
+
 def build_manifold_readiness_report(
     *,
     repo_root: str | Path,
     targets: Sequence[Mapping[str, Any]] = DEFAULT_MANIFOLD_AUDIT_TARGETS,
+    resolved_targets: Sequence[Mapping[str, Any]] = DEFAULT_RESOLVED_ADAPTER_TARGETS,
 ) -> dict:
     """Build a static manifold-readiness report for geometry-path refactors."""
     findings = []
@@ -83,11 +126,17 @@ def build_manifold_readiness_report(
         findings.extend(audit_file_for_patterns(repo_root=repo_root, target=target))
     n_blockers = sum(1 for finding in findings if finding["severity"] == "blocker")
     n_warnings = sum(1 for finding in findings if finding["severity"] == "warning")
+    resolved_adapters = count_resolved_adapters(
+        repo_root=repo_root,
+        targets=resolved_targets,
+    )
     return {
         "status": "needs_refactor" if n_blockers else "review",
         "n_findings": len(findings),
         "n_blockers": n_blockers,
         "n_warnings": n_warnings,
+        "n_resolved_adapters": sum(row["count"] for row in resolved_adapters),
+        "resolved_adapters": resolved_adapters,
         "findings": findings,
     }
 
