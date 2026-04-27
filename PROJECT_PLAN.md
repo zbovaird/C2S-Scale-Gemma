@@ -113,6 +113,11 @@ Transform the C2S-Scale-Gemma hybrid architecture into a specialized tool for mo
 4. Tighten documentation around config profiles, benchmark datasets, artifact interpretation limits, and what should/should not be inferred from projection views.
 5. Refactor the HGNN stack toward more manifold-native operations after the validation loop is producing stable evidence and the target manifold choice is clear.
 
+## Real Dataset Candidates
+
+- **First downloadable validation target:** `GSE176206_adipo_screen.h5ad.gz` from `GSE176206` (`Mouse transient partial reprogramming validation`). GEO lists this as a processed H5AD artifact for the transient OSKM/partial-reprogramming screen, and the current config expects it at `data/raw/GSE176206_adipo_screen.h5ad.gz`.
+- **Configured human validation target:** `GSE242423` (`Human fibroblast OSKM reprogramming validation`). Treat this as a strong target, but confirm processed count/AnnData availability from the associated resource before relying on it, because the GEO record notes that raw data are not provided due to patient privacy.
+
 ## Post-Build Validation Stages
 
 Once the core tooling is built out, proceed through these stages before making strong biological claims:
