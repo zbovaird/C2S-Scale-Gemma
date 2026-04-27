@@ -488,6 +488,15 @@ The benchmark summary and explorer artifacts include interpretation-limit notes 
 Run rows also include the geometry distance backend and graph embedding source, making it visible when a projective alignment run used UHG distance versus a Euclidean fallback and whether alignment consumed hyperbolic or projected graph embeddings.
 Set `fusion.require_geometry_backend = true` for validation runs that should fail fast instead of allowing the Euclidean fallback for projective/hyperbolic alignment modes.
 
+Review a completed export bundle before treating it as interpretation-ready:
+
+```bash
+uv run scripts/review_validation_artifacts.py \
+  --artifact-manifest artifacts/validation_bundle/human_fibroblast_oskm/validation_artifact_manifest.json
+```
+
+This writes `validation_artifact_review.json`, which layers content checks on top of artifact QA: interpretation-limit presence, recommendation status, geometry fallback use, risk-cohort signals, and trajectory geometry coverage.
+
 Before a real validation run, generate a readiness report for the configured validation tracks and dataset profiles:
 
 ```bash

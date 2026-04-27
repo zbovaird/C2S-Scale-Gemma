@@ -124,6 +124,7 @@ c2s-validation-trajectory-projection-plots = "scripts.plot_validation_trajectory
 c2s-validation-trajectory-projection-html = "scripts.render_validation_trajectory_projection:main"
 c2s-validation-export-all = "scripts.export_validation_bundle_artifacts:main"
 c2s-validation-artifact-qa = "scripts.qa_validation_artifacts:main"
+c2s-validation-artifact-review = "scripts.review_validation_artifacts:main"
 c2s-validation-readiness = "scripts.report_validation_readiness:main"
 c2s-validation-calibration = "scripts.report_validation_calibration:main"
 c2s-validation-review-protocol = "scripts.build_validation_review_protocol:main"
