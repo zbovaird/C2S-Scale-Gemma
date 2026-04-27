@@ -20,6 +20,8 @@ def test_build_validation_benchmark_rows_uses_primary_metrics_and_overlay_data()
             {
                 "label": "projective",
                 "alignment_mode": "projective_distance",
+                "geometry_distance_backend": "projective_uhg_distance",
+                "geometry_fallback_used": False,
                 "dataset_profile": "gse242423_human_fibroblast_oskm",
                 "embedding_summary": {
                     "fused_embeddings": {
@@ -28,6 +30,10 @@ def test_build_validation_benchmark_rows_uses_primary_metrics_and_overlay_data()
                     }
                 },
                 "overlay_summary": {
+                    "alignment": {
+                        "geometry_distance_backend": "projective_uhg_distance",
+                        "geometry_fallback_used": False,
+                    },
                     "branch_summary": {
                         "productive": {"count": 7},
                         "alternative": {"count": 3},
@@ -44,6 +50,8 @@ def test_build_validation_benchmark_rows_uses_primary_metrics_and_overlay_data()
     assert rows[0]["primary_metrics"] == ["mean_l2_shift", "safe_fraction"]
     assert rows[0]["productive_fraction"] == 0.7
     assert rows[0]["safe_fraction"] == 0.5
+    assert rows[0]["geometry_distance_backend"] == "projective_uhg_distance"
+    assert rows[0]["geometry_fallback_used"] is False
 
 
 def test_build_validation_benchmark_summary_picks_lowest_shift_run():

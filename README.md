@@ -483,6 +483,7 @@ uv run scripts/export_validation_bundle_artifacts.py \
 
 This writes a consolidated artifact bundle including the benchmark summary, explorer payload and HTML, trajectory dataset, trajectory projection, projection HTML, and a small manifest of generated files.
 The benchmark summary and explorer artifacts include interpretation-limit notes so projection views, heuristic safe-window calls, and alignment recommendations are kept separate from biological or in vivo safety claims.
+Run rows also include the geometry distance backend, making it visible when a projective alignment run used UHG distance versus a Euclidean fallback.
 
 Before a real validation run, generate a readiness report for the configured validation tracks and dataset profiles:
 

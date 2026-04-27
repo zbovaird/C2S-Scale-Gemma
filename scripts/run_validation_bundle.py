@@ -115,6 +115,12 @@ def main() -> None:
                     "alignment_mode",
                     "unknown",
                 ),
+                "geometry_distance_backend": result["overlay_summary"]
+                .get("alignment", {})
+                .get("geometry_distance_backend"),
+                "geometry_fallback_used": result["overlay_summary"]
+                .get("alignment", {})
+                .get("geometry_fallback_used"),
                 "dataset_profile": result["overlay_summary"].get("dataset_profile"),
             }
         )

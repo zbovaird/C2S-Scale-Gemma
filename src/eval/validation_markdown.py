@@ -63,7 +63,9 @@ def write_markdown_summary(output_path: Path, summary: dict) -> None:
             f"mean_cosine_similarity={row['mean_cosine_similarity']:.4f}, "
             f"productive_fraction={row['productive_fraction']:.4f}, "
             f"safe_fraction={row['safe_fraction']:.4f}, "
-            f"risk_fraction={row['risk_fraction']:.4f}"
+            f"risk_fraction={row['risk_fraction']:.4f}, "
+            f"geometry_backend={row.get('geometry_distance_backend')}, "
+            f"geometry_fallback_used={row.get('geometry_fallback_used')}"
         )
     for label, rows in summary.get("timepoint_summaries", {}).items():
         if not rows:

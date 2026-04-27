@@ -187,6 +187,35 @@ def _resolve_window_profile(config: Dict[str, Any]) -> Dict[str, Any]:
     return dict(config.get("reprogramming", {}).get("window_profile", {}))
 
 
+def _probe_alignment_backend(
+    trainer: DualEncoderTrainer,
+    embeddings: Dict[str, torch.Tensor],
+) -> Dict[str, Any]:
+    """Run a tiny contrastive pass to expose the configured geometry backend."""
+    text_embeddings = embeddings.get("text_embeddings")
+    graph_embeddings = embeddings.get("graph_embeddings")
+    if text_embeddings is None or graph_embeddings is None:
+        return {
+            "geometry_distance_backend": "unavailable",
+            "geometry_fallback_used": None,
+        }
+    batch_size = min(int(text_embeddings.size(0)), int(graph_embeddings.size(0)), 4)
+    if batch_size == 0:
+        return {
+            "geometry_distance_backend": "unavailable",
+            "geometry_fallback_used": None,
+        }
+    with torch.no_grad():
+        loss_output = trainer.contrastive_loss(
+            text_embeddings[:batch_size],
+            graph_embeddings[:batch_size],
+        )
+    return {
+        "geometry_distance_backend": loss_output.get("geometry_distance_backend"),
+        "geometry_fallback_used": bool(loss_output.get("geometry_fallback_used", False)),
+    }
+
+
 def run_embedding_comparison(
     *,
     config_path: str,
@@ -257,6 +286,7 @@ def run_embedding_comparison(
 
     baseline_embeddings = trainer.get_embeddings(baseline_loader)
     perturbed_embeddings = trainer.get_embeddings(perturbed_loader)
+    alignment_backend = _probe_alignment_backend(trainer, baseline_embeddings)
 
     comparison_summary = {
         representation: summarize_embedding_shift(
@@ -359,6 +389,7 @@ def run_embedding_comparison(
                 "text_projection_type",
                 "learned",
             ),
+            **alignment_backend,
         },
         "reference_labels": {
             "somatic_labels": somatic_labels,

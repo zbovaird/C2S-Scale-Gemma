@@ -33,6 +33,7 @@ def build_validation_benchmark_rows(
     for payload in run_payloads:
         embedding_summary = payload.get("embedding_summary", {}).get("fused_embeddings", {})
         overlay_summary = payload.get("overlay_summary", {})
+        alignment_summary = overlay_summary.get("alignment", {})
         branch_summary = overlay_summary.get("branch_summary", {})
         zone_summary = overlay_summary.get("zone_summary", {})
         total_branch_count = sum(
@@ -43,6 +44,14 @@ def build_validation_benchmark_rows(
         row = {
             "label": payload.get("label", "unknown"),
             "alignment_mode": payload.get("alignment_mode", "unknown"),
+            "geometry_distance_backend": payload.get(
+                "geometry_distance_backend",
+                alignment_summary.get("geometry_distance_backend"),
+            ),
+            "geometry_fallback_used": payload.get(
+                "geometry_fallback_used",
+                alignment_summary.get("geometry_fallback_used"),
+            ),
             "dataset_profile": payload.get("dataset_profile"),
             "mean_l2_shift": float(embedding_summary.get("mean_l2_shift", 0.0)),
             "mean_cosine_similarity": float(

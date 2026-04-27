@@ -51,6 +51,7 @@ Transform the C2S-Scale-Gemma hybrid architecture into a specialized tool for mo
 - [x] **Manifold-readiness audit:** Add static reporting for Euclidean operations that must be reviewed before the HGNN stack is treated as manifold-native.
 - [x] **Manifold refactor plan:** Convert readiness findings into staged implementation slices for encoder projections, HGNN layers, alignment geometry, and trainer embedding selection.
 - [x] **Alignment backend transparency:** Expose whether alignment loss used projective UHG distance or a Euclidean fallback during geometry-aware runs.
+- [x] **Validation backend reporting:** Carry geometry backend/fallback metadata from embedding comparisons into validation summaries and markdown reports.
 - [ ] **Artifact review:** Use the one-command validation artifact export to review benchmark summaries, explorer HTML, shared trajectory projections, and cell-level trajectory deltas for real runs.
 - [ ] **HGNN / manifold layers:** Refactor the hyperbolic encoder path so Euclidean `torch.nn.Linear` (where it sits on the hyperbolic pathway) gives way to **`uhg` hyperbolic linear / manifold-native ops**, with **one** primary manifold (Lorentz vs Poincaré) end-to-end.
 - [ ] **Alignment script / losses:** Update contrastive alignment to use **hyperbolic distance** (e.g. `uhg.manifolds.Lorentz.dist` if Lorentz is the chosen model) instead of relying solely on `F.cosine_similarity` on embeddings that are not guaranteed to live in the same geometric space.
@@ -80,6 +81,7 @@ Transform the C2S-Scale-Gemma hybrid architecture into a specialized tool for mo
 - [x] Added manifold-readiness audit reports for identifying Euclidean operations on the geometry path before UHG refactoring.
 - [x] Added manifold refactor plan exports so readiness findings become ordered implementation stages with success criteria.
 - [x] Added alignment loss backend metadata so projective validation runs can report whether UHG distance or fallback distance was used.
+- [x] Propagated geometry backend metadata into validation benchmark rows and markdown so fallback use remains visible in exported artifacts.
 
 ## Updated Remaining Build
 
