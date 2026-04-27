@@ -16,6 +16,7 @@ def test_write_markdown_summary_includes_interpretation_limits(tmp_path):
             },
             "interpretation_limits": ["Representation-level evidence only."],
             "runs": [],
+            "trajectory_geometry_summary": [],
             "timepoint_summaries": {},
             "timepoint_comparison": [],
         },
@@ -50,6 +51,16 @@ def test_write_markdown_summary_includes_geometry_backend_metadata(tmp_path):
                     "alignment_graph_source": "hyperbolic_embeddings",
                 }
             ],
+            "trajectory_geometry_summary": [
+                {
+                    "label": "projective",
+                    "alignment_mode": "projective_distance",
+                    "mean_geometry_distance": 0.4,
+                    "max_geometry_distance": 0.8,
+                    "geometry_distance_backend": "projective_uhg_distance",
+                    "geometry_fallback_used": False,
+                }
+            ],
             "timepoint_summaries": {},
             "timepoint_comparison": [],
         },
@@ -59,3 +70,5 @@ def test_write_markdown_summary_includes_geometry_backend_metadata(tmp_path):
     assert "geometry_backend=projective_uhg_distance" in markdown
     assert "geometry_fallback_used=False" in markdown
     assert "alignment_graph_source=hyperbolic_embeddings" in markdown
+    assert "## Trajectory Geometry Summary" in markdown
+    assert "mean_geometry_distance=0.4000" in markdown

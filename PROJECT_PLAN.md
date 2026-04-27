@@ -59,6 +59,7 @@ Transform the C2S-Scale-Gemma hybrid architecture into a specialized tool for mo
 - [x] **Strict geometry backend option:** Add a config-driven fail-fast mode for projective/hyperbolic alignment when the UHG distance backend is unavailable.
 - [x] **Readiness progress accounting:** Extend the manifold-readiness audit to report resolved tangent adapter coverage alongside remaining findings.
 - [x] **Trajectory geometry artifact:** Export per-cell validation trajectory geometry distances alongside shared-PCA projection artifacts.
+- [x] **Trajectory geometry summary:** Add compact mean/max geometry-distance summaries to validation benchmark artifacts.
 - [ ] **Artifact review:** Use the one-command validation artifact export to review benchmark summaries, explorer HTML, shared trajectory projections, and cell-level trajectory deltas for real runs.
 - [ ] **HGNN / manifold layers:** Refactor the hyperbolic encoder path so Euclidean `torch.nn.Linear` (where it sits on the hyperbolic pathway) gives way to **`uhg` hyperbolic linear / manifold-native ops**, with **one** primary manifold (Lorentz vs Poincaré) end-to-end.
 - [ ] **Alignment script / losses:** Update contrastive alignment to use **hyperbolic distance** (e.g. `uhg.manifolds.Lorentz.dist` if Lorentz is the chosen model) instead of relying solely on `F.cosine_similarity` on embeddings that are not guaranteed to live in the same geometric space.
@@ -96,6 +97,7 @@ Transform the C2S-Scale-Gemma hybrid architecture into a specialized tool for mo
 - [x] Added `fusion.require_geometry_backend` so validation runs can reject Euclidean fallback distance for geometry-aware alignment.
 - [x] Added resolved-adapter counts to manifold-readiness reports so geometry refactor progress is visible in audit artifacts.
 - [x] Added validation trajectory geometry-distance artifacts with backend/fallback metadata for per-cell baseline-to-perturbed movement.
+- [x] Added compact trajectory geometry summaries to validation benchmark JSON and Markdown reports.
 
 ## Updated Remaining Build
 

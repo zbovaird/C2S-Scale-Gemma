@@ -112,3 +112,19 @@ def build_validation_trajectory_geometry(
         "artifact_type": "validation_trajectory_geometry",
         "runs": runs,
     }
+
+
+def summarize_validation_trajectory_geometry(geometry_payload: Mapping[str, Any]) -> list[dict]:
+    """Return compact run-level geometry summaries for benchmark reports."""
+    return [
+        {
+            "label": run.get("label"),
+            "alignment_mode": run.get("alignment_mode"),
+            "geometry_distance_backend": run.get("geometry_distance_backend"),
+            "geometry_fallback_used": run.get("geometry_fallback_used"),
+            "n_cells": run.get("n_cells", 0),
+            "mean_geometry_distance": run.get("mean_geometry_distance", 0.0),
+            "max_geometry_distance": run.get("max_geometry_distance", 0.0),
+        }
+        for run in geometry_payload.get("runs", [])
+    ]

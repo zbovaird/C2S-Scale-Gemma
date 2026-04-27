@@ -12,7 +12,10 @@ from eval.validation_explorer_html import render_validation_explorer_html
 from eval.validation_markdown import write_markdown_summary
 from eval.validation_summary import build_validation_benchmark_summary, load_json_file
 from eval.validation_trajectory_dataset import build_validation_trajectory_dataset
-from eval.validation_trajectory_geometry import build_validation_trajectory_geometry
+from eval.validation_trajectory_geometry import (
+    build_validation_trajectory_geometry,
+    summarize_validation_trajectory_geometry,
+)
 from eval.validation_trajectory_projection import build_validation_trajectory_projection
 from eval.validation_trajectory_projection_html import (
     render_validation_trajectory_projection_html,
@@ -80,11 +83,18 @@ def export_validation_bundle_artifacts(
     output_path.mkdir(parents=True, exist_ok=True)
     artifact_paths = build_validation_artifact_paths(output_path)
 
-    summary_run_payloads = load_validation_run_payloads(
+    trajectory_run_payloads = load_validation_run_payloads(
         validation_manifest,
-        include_embeddings=False,
+        include_embeddings=True,
     )
-    summary = build_validation_benchmark_summary(validation_manifest, summary_run_payloads)
+    trajectory_geometry = build_validation_trajectory_geometry(
+        validation_manifest,
+        trajectory_run_payloads,
+    )
+    summary = build_validation_benchmark_summary(validation_manifest, trajectory_run_payloads)
+    summary["trajectory_geometry_summary"] = summarize_validation_trajectory_geometry(
+        trajectory_geometry
+    )
     Path(artifact_paths["summary_json"]).write_text(
         json.dumps(summary, indent=2),
         encoding="utf-8",
@@ -101,10 +111,6 @@ def export_validation_bundle_artifacts(
         encoding="utf-8",
     )
 
-    trajectory_run_payloads = load_validation_run_payloads(
-        validation_manifest,
-        include_embeddings=True,
-    )
     trajectory_dataset = build_validation_trajectory_dataset(
         validation_manifest,
         trajectory_run_payloads,
@@ -114,10 +120,6 @@ def export_validation_bundle_artifacts(
         encoding="utf-8",
     )
 
-    trajectory_geometry = build_validation_trajectory_geometry(
-        validation_manifest,
-        trajectory_run_payloads,
-    )
     Path(artifact_paths["trajectory_geometry"]).write_text(
         json.dumps(trajectory_geometry, indent=2),
         encoding="utf-8",

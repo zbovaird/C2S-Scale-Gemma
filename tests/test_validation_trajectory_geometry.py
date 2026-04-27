@@ -3,6 +3,7 @@ import numpy as np
 from eval.validation_trajectory_geometry import (
     build_validation_trajectory_geometry,
     compute_pairwise_geometry_distances,
+    summarize_validation_trajectory_geometry,
 )
 
 
@@ -70,3 +71,34 @@ def test_build_validation_trajectory_geometry_exports_run_and_cell_rows():
     assert payload["runs"][0]["n_cells"] == 2
     assert payload["runs"][0]["cell_rows"][0]["cell_id"] == "cell_a"
     assert payload["runs"][0]["cell_rows"][0]["longevity_safe_zone"] is True
+
+
+def test_summarize_validation_trajectory_geometry_returns_compact_rows():
+    summary = summarize_validation_trajectory_geometry(
+        {
+            "runs": [
+                {
+                    "label": "euclidean",
+                    "alignment_mode": "euclidean_cosine",
+                    "geometry_distance_backend": "euclidean_l2_fallback",
+                    "geometry_fallback_used": False,
+                    "n_cells": 2,
+                    "mean_geometry_distance": 1.0,
+                    "max_geometry_distance": 1.5,
+                    "cell_rows": [{"cell_id": "a"}],
+                }
+            ]
+        }
+    )
+
+    assert summary == [
+        {
+            "label": "euclidean",
+            "alignment_mode": "euclidean_cosine",
+            "geometry_distance_backend": "euclidean_l2_fallback",
+            "geometry_fallback_used": False,
+            "n_cells": 2,
+            "mean_geometry_distance": 1.0,
+            "max_geometry_distance": 1.5,
+        }
+    ]

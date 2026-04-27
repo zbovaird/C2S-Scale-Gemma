@@ -112,6 +112,7 @@ def test_export_validation_bundle_artifacts_writes_main_outputs(tmp_path):
     )
 
     artifact_paths = export_validation_bundle_artifacts(validation_manifest_path)
+    summary = json.loads(Path(artifact_paths["summary_json"]).read_text())
     projection = json.loads(Path(artifact_paths["trajectory_projection"]).read_text())
     geometry = json.loads(Path(artifact_paths["trajectory_geometry"]).read_text())
 
@@ -120,5 +121,6 @@ def test_export_validation_bundle_artifacts_writes_main_outputs(tmp_path):
     assert Path(artifact_paths["trajectory_dataset"]).exists()
     assert Path(artifact_paths["trajectory_geometry"]).exists()
     assert Path(artifact_paths["trajectory_projection_html"]).exists()
+    assert summary["trajectory_geometry_summary"][0]["label"] == "euclidean"
     assert projection["projection_method"] == "shared_pca"
     assert geometry["artifact_type"] == "validation_trajectory_geometry"

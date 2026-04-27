@@ -68,6 +68,17 @@ def write_markdown_summary(output_path: Path, summary: dict) -> None:
             f"geometry_fallback_used={row.get('geometry_fallback_used')}, "
             f"alignment_graph_source={row.get('alignment_graph_source')}"
         )
+    geometry_rows = summary.get("trajectory_geometry_summary", [])
+    if geometry_rows:
+        lines.extend(["", "## Trajectory Geometry Summary", ""])
+        for row in geometry_rows:
+            lines.append(
+                f"- {row['label']} ({row['alignment_mode']}): "
+                f"mean_geometry_distance={row['mean_geometry_distance']:.4f}, "
+                f"max_geometry_distance={row['max_geometry_distance']:.4f}, "
+                f"backend={row.get('geometry_distance_backend')}, "
+                f"fallback_used={row.get('geometry_fallback_used')}"
+            )
     for label, rows in summary.get("timepoint_summaries", {}).items():
         if not rows:
             continue
