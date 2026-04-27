@@ -483,6 +483,27 @@ uv run scripts/export_validation_bundle_artifacts.py \
 
 This writes a consolidated artifact bundle including the benchmark summary, explorer payload and HTML, trajectory dataset, trajectory projection, projection HTML, and a small manifest of generated files.
 
+Before a real validation run, the bundle runner now performs preflight checks for the selected track, input datasets, configs, checkpoints, and dataset-profile registry. To run those checks without model execution:
+
+```bash
+uv run scripts/run_validation_bundle.py \
+  --track human_fibroblast_oskm \
+  --baseline-data-path data/raw/GSE242423.h5ad \
+  --perturbed-data-path artifacts/GSE242423_oskm_perturbed.h5ad \
+  --euclidean-config configs/colab_7b.toml \
+  --euclidean-checkpoint artifacts/euclidean/final_model.pt \
+  --projective-config configs/colab_7b.toml \
+  --projective-checkpoint artifacts/projective/final_model.pt \
+  --preflight-only
+```
+
+After exporting the consolidated artifacts, run QA checks against the generated artifact manifest:
+
+```bash
+uv run scripts/qa_validation_artifacts.py \
+  --artifact-manifest artifacts/validation_bundle/human_fibroblast_oskm/validation_artifacts_manifest.json
+```
+
 This produces:
 
 - `shift_histogram.png`

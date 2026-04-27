@@ -43,7 +43,8 @@ Transform the C2S-Scale-Gemma hybrid architecture into a specialized tool for mo
 ## Immediate Next Steps (Checklist)
 
 - [ ] **Real validation datasets:** Run the named validation bundle workflow against the selected OKSM time-course datasets and record which profiles/thresholds need adjustment.
-- [ ] **Artifact QA:** Use the one-command validation artifact export to review benchmark summaries, explorer HTML, shared trajectory projections, and cell-level trajectory deltas for real runs.
+- [x] **Validation preflight / artifact QA:** Add preflight checks for validation inputs and QA checks for exported artifact bundles before treating a run as review-ready.
+- [ ] **Artifact review:** Use the one-command validation artifact export to review benchmark summaries, explorer HTML, shared trajectory projections, and cell-level trajectory deltas for real runs.
 - [ ] **HGNN / manifold layers:** Refactor the hyperbolic encoder path so Euclidean `torch.nn.Linear` (where it sits on the hyperbolic pathway) gives way to **`uhg` hyperbolic linear / manifold-native ops**, with **one** primary manifold (Lorentz vs Poincaré) end-to-end.
 - [ ] **Alignment script / losses:** Update contrastive alignment to use **hyperbolic distance** (e.g. `uhg.manifolds.Lorentz.dist` if Lorentz is the chosen model) instead of relying solely on `F.cosine_similarity` on embeddings that are not guaranteed to live in the same geometric space.
 - [ ] **Data prep (PBMC / screening):** Isolate cells that **share regulatory pathways** with Yamanaka factors to stress-test “root-finding” before full reprogramming series are treated as biological evidence.
@@ -64,6 +65,7 @@ Transform the C2S-Scale-Gemma hybrid architecture into a specialized tool for mo
 - [x] Added cell-level validation trajectory datasets with timepoint/branch cohorts and projective-vs-Euclidean cell deltas.
 - [x] Added shared-PCA trajectory projection exports, branch/safe-zone projection plots, and an interactive projection HTML viewer.
 - [x] Added a one-command validation artifact export workflow that emits the main benchmark, explorer, trajectory dataset, projection, and HTML artifacts together.
+- [x] Added validation preflight checks and exported-artifact QA so real dataset runs fail early when inputs or outputs are incomplete.
 
 ## Updated Remaining Build
 
@@ -72,6 +74,15 @@ Transform the C2S-Scale-Gemma hybrid architecture into a specialized tool for mo
 3. Extend the current shared-PCA trajectory views toward hyperbolic/manifold-native views once real validation outputs show stable biological structure.
 4. Tighten documentation around config profiles, benchmark datasets, artifact interpretation limits, and what should/should not be inferred from projection views.
 5. Refactor the HGNN stack toward more manifold-native operations after the validation loop is producing stable evidence and the target manifold choice is clear.
+
+## Post-Build Validation Stages
+
+Once the core tooling is built out, proceed through these stages before making strong biological claims:
+
+1. **Real dataset validation:** Run the full validation bundle workflow on named OKSM datasets. Confirm timepoint ordering, reference labels, marker panels, and safe-window thresholds against actual study annotations.
+2. **Ablation and baseline challenge:** Compare projective/UHG alignment against Euclidean baselines, simpler PCA/UMAP workflows, and non-OSKM controls. Treat UHG as useful only if it improves stage-wise biological signal without inflating risk metrics.
+3. **Biological grounding:** Validate inferred partial-reprogramming and longevity-safe zones against independent biological readouts such as cell identity retention, senescence markers, DNA damage response, pluripotency markers, and epigenetic-age proxies.
+4. **External replication and interpretation limits:** Replicate findings across independent datasets, species, protocols, and held-out timepoints. Document where the model generalizes, where it fails, and what claims are not supported.
 
 ---
 

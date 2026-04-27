@@ -16,6 +16,7 @@ from eval.validation_tracks import (
     build_validation_bundle_manifest,
     resolve_validation_track,
 )
+from eval.validation_preflight import build_validation_input_preflight
 from compare_oskm_perturbation_embeddings import run_embedding_comparison
 
 
@@ -51,9 +52,34 @@ def main() -> None:
     parser.add_argument("--euclidean-checkpoint", type=str, required=True, help="Euclidean run checkpoint")
     parser.add_argument("--projective-config", type=str, required=True, help="Projective run config")
     parser.add_argument("--projective-checkpoint", type=str, required=True, help="Projective run checkpoint")
+    parser.add_argument(
+        "--preflight-only",
+        action="store_true",
+        help="Run input checks and exit before model execution",
+    )
     args = parser.parse_args()
 
     track = resolve_validation_track(args.track, args.track_config)
+    preflight_report = build_validation_input_preflight(
+        track_name=args.track,
+        track_config=track,
+        baseline_data_path=args.baseline_data_path,
+        perturbed_data_path=args.perturbed_data_path,
+        euclidean_config=args.euclidean_config,
+        euclidean_checkpoint=args.euclidean_checkpoint,
+        projective_config=args.projective_config,
+        projective_checkpoint=args.projective_checkpoint,
+        dataset_profile_config=args.dataset_profile_config,
+    )
+    if preflight_report["status"] != "pass":
+        failed_checks = [
+            check["id"] for check in preflight_report["checks"] if not check["passed"]
+        ]
+        raise SystemExit(f"Validation preflight failed: {', '.join(failed_checks)}")
+    if args.preflight_only:
+        logger.info("Validation preflight passed for track %s", args.track)
+        return
+
     dataset_profile = track.get("dataset_profile")
     output_root = Path(args.output_root) / args.track
     output_root.mkdir(parents=True, exist_ok=True)
