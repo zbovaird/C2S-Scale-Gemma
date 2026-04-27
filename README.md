@@ -508,6 +508,14 @@ This lists accessions, source URLs, expected observation columns, expected timep
 
 For PBMC or screening-style datasets, `biology.regulatory_screening` provides OSKM-adjacent pathway panels and cell-level ranking helpers for identifying cells with shared regulatory activity before full reprogramming-series validation.
 
+To run the screening helper on a candidate `.h5ad` file:
+
+```bash
+uv run scripts/screen_regulatory_pathways.py \
+  --data-path data/raw/candidate_screen.h5ad \
+  --output-path artifacts/regulatory_screening_report.json
+```
+
 Audit profile and recommendation thresholds before treating validation outputs as calibrated:
 
 ```bash

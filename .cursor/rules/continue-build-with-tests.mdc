@@ -1,0 +1,13 @@
+---
+description: Continue the build while preserving valid tests
+alwaysApply: true
+---
+
+# Continue Build With Test Safety
+
+- Continue building the project plan until the build-out is complete when the user has authorized ongoing work.
+- Keep work in small, tested slices and update the project plan as the implementation state changes.
+- As long as tests pass, continue to the next relevant build slice without requiring the user to confirm each step.
+- Do not delete, remove, skip, xfail, or ignore a valid failing test just to make the suite pass.
+- If a relevant test fails, fix the implementation or test fixture honestly, then rerun the affected tests and the full suite before committing.
+- Push completed passing slices to the active development branch when the user has authorized GitHub updates.
