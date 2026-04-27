@@ -134,6 +134,7 @@ c2s-validation-profile-check = "scripts.check_validation_profile:main"
 c2s-manifold-readiness = "scripts.report_manifold_readiness:main"
 c2s-manifold-refactor-plan = "scripts.build_manifold_refactor_plan:main"
 c2s-regulatory-screen = "scripts.screen_regulatory_pathways:main"
+c2s-regulatory-select-candidates = "scripts.select_regulatory_candidates:main"
 c2s-perturbation-report = "scripts.generate_oskm_perturbation_report:main"
 
 [tool.hatch.build.targets.wheel]

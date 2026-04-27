@@ -552,6 +552,18 @@ uv run scripts/screen_regulatory_pathways.py \
   --output-path artifacts/regulatory_screening_report.json
 ```
 
+Then select top candidate cells for root-finding stress tests or write a subset `.h5ad`:
+
+```bash
+uv run scripts/select_regulatory_candidates.py \
+  --screening-report artifacts/regulatory_screening_report.json \
+  --top-n 500 \
+  --data-path data/raw/candidate_screen.h5ad \
+  --output-h5ad artifacts/regulatory_candidates.h5ad
+```
+
+This writes `regulatory_candidate_selection.json` with selected cell IDs, source indices, criteria, and ranked rows; `--output-h5ad` is optional.
+
 Audit profile and recommendation thresholds before treating validation outputs as calibrated:
 
 ```bash

@@ -65,6 +65,7 @@ Transform the C2S-Scale-Gemma hybrid architecture into a specialized tool for mo
 - [x] **Validation data manifest:** Export accessions, source URLs, expected columns/timepoints, and local data targets for configured validation tracks.
 - [x] **Regulatory pathway screening:** Add OSKM-adjacent pathway scoring helpers for PBMC/screening datasets before full biological interpretation.
 - [x] **Regulatory screening report:** Add a CLI/report workflow for ranking candidate `.h5ad` datasets by OSKM-adjacent pathway activity.
+- [x] **Regulatory candidate-cell selection:** Add a selection/export workflow for isolating high-signal cells from PBMC/screening datasets before root-finding stress tests.
 - [x] **Dataset download plans:** Add inferred GEO supplementary download URLs/commands to validation data manifests for review before large downloads.
 - [x] **Dataset inspection:** Add a downloaded-AnnData inspection report for obs columns, timepoints, cell types, and OSKM gene resolution before expensive validation.
 - [x] **Dataset profile checks:** Compare inspection reports against named validation-track expectations before full bundle execution.
@@ -72,7 +73,7 @@ Transform the C2S-Scale-Gemma hybrid architecture into a specialized tool for mo
 - [ ] **Artifact review:** Use the one-command validation artifact export to review benchmark summaries, explorer HTML, shared trajectory projections, and cell-level trajectory deltas for real runs.
 - [ ] **HGNN / manifold layers:** Refactor the hyperbolic encoder path so Euclidean `torch.nn.Linear` (where it sits on the hyperbolic pathway) gives way to **`uhg` hyperbolic linear / manifold-native ops**, with **one** primary manifold (Lorentz vs Poincaré) end-to-end.
 - [x] **Alignment script / losses:** Update contrastive alignment to use the configured **projective-UHG distance** path for geometry-aware runs, with explicit backend/fallback and primary-manifold metadata instead of relying solely on `F.cosine_similarity`.
-- [ ] **Data prep (PBMC / screening):** Isolate cells that **share regulatory pathways** with Yamanaka factors to stress-test “root-finding” before full reprogramming series are treated as biological evidence.
+- [x] **Data prep (PBMC / screening):** Isolate cells that **share regulatory pathways** with Yamanaka factors to stress-test “root-finding” before full reprogramming series are treated as biological evidence.
 
 ## Progress So Far
 
@@ -112,6 +113,7 @@ Transform the C2S-Scale-Gemma hybrid architecture into a specialized tool for mo
 - [x] Added validation data manifests for dataset acquisition/review before real benchmark runs.
 - [x] Added OSKM-adjacent regulatory pathway screening helpers to rank cells by shared regulatory activity.
 - [x] Added regulatory screening report exports for candidate PBMC/screening datasets.
+- [x] Added regulatory candidate-cell selection manifests and optional `.h5ad` subset export for high-signal screening cohorts.
 - [x] Added reviewable GEO supplementary download plans to validation data manifests without automatically downloading large files.
 - [x] Added validation dataset inspection reports for checking downloaded `.h5ad` schema and OSKM presence before validation runs.
 - [x] Added validation profile checks that compare inspection reports with configured track columns, expected timepoints, and OSKM resolution.
