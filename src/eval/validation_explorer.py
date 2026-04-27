@@ -81,6 +81,7 @@ def build_validation_explorer_payload(summary: Dict[str, Any]) -> Dict[str, Any]
         "timepoint_comparison": summary.get("timepoint_comparison", []),
         "charts": charts,
         "recommendation": recommendation,
+        "interpretation_limits": summary.get("interpretation_limits", []),
         "explorer_sections": [
             {
                 "id": "run_table",
@@ -106,6 +107,11 @@ def build_validation_explorer_payload(summary: Dict[str, Any]) -> Dict[str, Any]
                 "id": "recommendation_evidence",
                 "title": "Recommendation evidence",
                 "kind": "evidence_list",
+            },
+            {
+                "id": "interpretation_limits",
+                "title": "Interpretation limits",
+                "kind": "note_list",
             },
         ],
     }

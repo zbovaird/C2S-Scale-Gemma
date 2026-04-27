@@ -19,9 +19,18 @@ def write_markdown_summary(output_path: Path, summary: dict) -> None:
         f"- preferred_alignment: {summary.get('recommendation', {}).get('preferred_alignment')}",
         f"- reason: {summary.get('recommendation', {}).get('reason')}",
         "",
-        "## Runs",
+        "## Interpretation Limits",
         "",
     ]
+    for limit in summary.get("interpretation_limits", []):
+        lines.append(f"- {limit}")
+    lines.extend(
+        [
+            "",
+            "## Runs",
+            "",
+        ]
+    )
     recommendation_evidence = summary.get("recommendation", {}).get("evidence", {})
     top_supporting = recommendation_evidence.get("top_supporting_timepoints", [])
     top_concerning = recommendation_evidence.get("top_concerning_timepoints", [])

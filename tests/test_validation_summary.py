@@ -1,5 +1,6 @@
 from eval.validation_summary import (
     build_alignment_recommendation,
+    build_interpretation_limits,
     build_recommendation_evidence,
     build_validation_benchmark_rows,
     build_validation_benchmark_summary,
@@ -100,6 +101,7 @@ def test_build_validation_benchmark_summary_picks_lowest_shift_run():
     )
 
     assert summary["best_by_mean_l2_shift"]["label"] == "projective"
+    assert "interpretation_limits" in summary
 
 
 def test_build_timepoint_progression_rows_uses_expected_timepoint_order():
@@ -228,3 +230,18 @@ def test_build_recommendation_evidence_surfaces_best_and_worst_timepoints():
 
     assert evidence["top_supporting_timepoints"][0]["timepoint"] == "D2"
     assert evidence["top_concerning_timepoints"][0]["timepoint"] == "D6"
+
+
+def test_build_interpretation_limits_includes_defaults_and_track_specific_notes():
+    limits = build_interpretation_limits(
+        {
+            "track": {
+                "interpretation_limits": [
+                    "Track-specific calibration is required before biological use."
+                ]
+            }
+        }
+    )
+
+    assert any("representation-level evidence" in limit for limit in limits)
+    assert "Track-specific calibration is required before biological use." in limits

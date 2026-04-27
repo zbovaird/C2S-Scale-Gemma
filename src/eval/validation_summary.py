@@ -6,6 +6,13 @@ import json
 from pathlib import Path
 from typing import Any, Dict, Sequence
 
+DEFAULT_INTERPRETATION_LIMITS = [
+    "Validation metrics are representation-level evidence, not proof of safe biological reprogramming.",
+    "Partial-window and longevity-safe-zone labels are heuristics that require independent biological validation.",
+    "Projection views are qualitative diagnostics and should not be interpreted as causal mechanisms.",
+    "Alignment recommendations compare configured runs only; they do not establish clinical or in vivo safety.",
+]
+
 
 def load_json_file(path: str | Path) -> Dict[str, Any]:
     file_path = Path(path)
@@ -133,7 +140,16 @@ def build_validation_benchmark_summary(
         "timepoint_summaries": timepoint_summaries,
         "timepoint_comparison": timepoint_comparison,
         "recommendation": recommendation,
+        "interpretation_limits": build_interpretation_limits(validation_manifest),
     }
+
+
+def build_interpretation_limits(validation_manifest: Dict[str, Any]) -> list[str]:
+    """Return interpretation limits that should travel with validation artifacts."""
+    custom_limits = validation_manifest.get("track", {}).get("interpretation_limits", [])
+    limits = list(DEFAULT_INTERPRETATION_LIMITS)
+    limits.extend(str(limit) for limit in custom_limits if str(limit).strip())
+    return limits
 
 
 def build_timepoint_comparison_rows(

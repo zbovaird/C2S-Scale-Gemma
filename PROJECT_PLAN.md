@@ -45,6 +45,7 @@ Transform the C2S-Scale-Gemma hybrid architecture into a specialized tool for mo
 - [ ] **Real validation datasets:** Run the named validation bundle workflow against the selected OKSM time-course datasets and record which profiles/thresholds need adjustment.
 - [x] **Dataset readiness manifest:** Add a readiness report that connects validation tracks, dataset profiles, local data hints, and missing artifacts before expensive validation runs.
 - [x] **Validation preflight / artifact QA:** Add preflight checks for validation inputs and QA checks for exported artifact bundles before treating a run as review-ready.
+- [x] **Interpretation-limit guardrails:** Carry explicit biological-claim limits into validation summaries, explorer payloads, and markdown reports.
 - [ ] **Artifact review:** Use the one-command validation artifact export to review benchmark summaries, explorer HTML, shared trajectory projections, and cell-level trajectory deltas for real runs.
 - [ ] **HGNN / manifold layers:** Refactor the hyperbolic encoder path so Euclidean `torch.nn.Linear` (where it sits on the hyperbolic pathway) gives way to **`uhg` hyperbolic linear / manifold-native ops**, with **one** primary manifold (Lorentz vs Poincaré) end-to-end.
 - [ ] **Alignment script / losses:** Update contrastive alignment to use **hyperbolic distance** (e.g. `uhg.manifolds.Lorentz.dist` if Lorentz is the chosen model) instead of relying solely on `F.cosine_similarity` on embeddings that are not guaranteed to live in the same geometric space.
@@ -68,6 +69,7 @@ Transform the C2S-Scale-Gemma hybrid architecture into a specialized tool for mo
 - [x] Added a one-command validation artifact export workflow that emits the main benchmark, explorer, trajectory dataset, projection, and HTML artifacts together.
 - [x] Added validation preflight checks and exported-artifact QA so real dataset runs fail early when inputs or outputs are incomplete.
 - [x] Added validation dataset readiness reporting so tracks can be triaged as ready, missing data, or metadata-incomplete before model execution.
+- [x] Added interpretation-limit metadata to validation outputs so heuristic model findings stay separated from biological safety claims.
 
 ## Updated Remaining Build
 

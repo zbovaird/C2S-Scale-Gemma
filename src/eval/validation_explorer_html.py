@@ -110,6 +110,10 @@ def render_validation_explorer_html(payload: Dict[str, Any]) -> str:
       </div>
     </div>
   </section>
+  <section>
+    <h2>Interpretation Limits</h2>
+    <div class="panel" id="interpretation-limits"></div>
+  </section>
   <script>
     const payload = {serialized_payload};
 
@@ -250,6 +254,16 @@ def render_validation_explorer_html(payload: Dict[str, Any]) -> str:
       `).join("");
     }}
 
+    function renderInterpretationLimits() {{
+      const target = document.getElementById("interpretation-limits");
+      const limits = payload.interpretation_limits || [];
+      if (!limits.length) {{
+        target.textContent = "No interpretation limits provided.";
+        return;
+      }}
+      target.innerHTML = `<ul>${{limits.map((limit) => `<li>${{escapeHtml(limit)}}</li>`).join("")}}</ul>`;
+    }}
+
     setSubtitle();
     renderCards();
     renderRunTable();
@@ -257,6 +271,7 @@ def render_validation_explorer_html(payload: Dict[str, Any]) -> str:
     const evidence = payload.recommendation?.evidence || {{}};
     renderEvidence("supporting-evidence", evidence.top_supporting_timepoints || []);
     renderEvidence("concerning-evidence", evidence.top_concerning_timepoints || []);
+    renderInterpretationLimits();
   </script>
 </body>
 </html>
