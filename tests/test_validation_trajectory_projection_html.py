@@ -34,3 +34,16 @@ def test_render_validation_trajectory_projection_html_includes_controls_and_canv
     assert "Trajectory Projection Viewer" in html
     assert 'select id="run-select"' in html
     assert 'canvas id="plot"' in html
+
+
+def test_render_validation_trajectory_projection_html_escapes_title_and_legend_text():
+    html = render_validation_trajectory_projection_html(
+        {
+            "track_name": "<unsafe>",
+            "projection_method": "shared_pca",
+            "runs": [],
+        }
+    )
+
+    assert "<title>&lt;unsafe&gt;</title>" in html
+    assert "labelText.textContent = label;" in html

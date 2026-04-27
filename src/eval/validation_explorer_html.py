@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from html import escape
 from typing import Any, Dict
 
 
@@ -13,7 +14,7 @@ def _serialize_payload(payload: Dict[str, Any]) -> str:
 def render_validation_explorer_html(payload: Dict[str, Any]) -> str:
     """Render a lightweight interactive HTML view from an explorer payload."""
     serialized_payload = _serialize_payload(payload)
-    title = payload.get("track_name") or "validation_explorer"
+    title = escape(str(payload.get("track_name") or "validation_explorer"), quote=True)
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -114,6 +115,15 @@ def render_validation_explorer_html(payload: Dict[str, Any]) -> str:
 
     const palette = ["#2563eb", "#059669", "#d97706", "#dc2626", "#7c3aed"];
 
+    function escapeHtml(value) {{
+      return String(value ?? "n/a")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }}
+
     function setSubtitle() {{
       const subtitle = payload.dataset_profile
         ? `${{payload.track_name}} | ${{payload.dataset_profile}}`
@@ -126,7 +136,7 @@ def render_validation_explorer_html(payload: Dict[str, Any]) -> str:
       (payload.overview_cards || []).forEach((card) => {{
         const el = document.createElement("div");
         el.className = "card";
-        el.innerHTML = `<div class="small">${{card.label}}</div><div>${{card.value ?? "n/a"}}</div>`;
+        el.innerHTML = `<div class="small">${{escapeHtml(card.label)}}</div><div>${{escapeHtml(card.value)}}</div>`;
         container.appendChild(el);
       }});
     }}
@@ -139,8 +149,8 @@ def render_validation_explorer_html(payload: Dict[str, Any]) -> str:
         return;
       }}
       const columns = Object.keys(rows[0]);
-      const thead = `<thead><tr>${{columns.map((col) => `<th>${{col}}</th>`).join("")}}</tr></thead>`;
-      const tbody = `<tbody>${{rows.map((row) => `<tr>${{columns.map((col) => `<td>${{row[col]}}</td>`).join("")}}</tr>`).join("")}}</tbody>`;
+      const thead = `<thead><tr>${{columns.map((col) => `<th>${{escapeHtml(col)}}</th>`).join("")}}</tr></thead>`;
+      const tbody = `<tbody>${{rows.map((row) => `<tr>${{columns.map((col) => `<td>${{escapeHtml(row[col])}}</td>`).join("")}}</tr>`).join("")}}</tbody>`;
       table.innerHTML = thead + tbody;
     }}
 
@@ -214,7 +224,7 @@ def render_validation_explorer_html(payload: Dict[str, Any]) -> str:
       (payload.charts || []).forEach((chart) => {{
         const panel = document.createElement("div");
         panel.className = "panel";
-        panel.innerHTML = `<div class="chart-title">${{chart.title}}</div>`;
+        panel.innerHTML = `<div class="chart-title">${{escapeHtml(chart.title)}}</div>`;
         if (chart.kind === "line") {{
           renderLineChart(chart, panel);
         }} else {{
@@ -232,7 +242,7 @@ def render_validation_explorer_html(payload: Dict[str, Any]) -> str:
       }}
       target.innerHTML = rows.map((row) => `
         <div class="small">
-          <strong>${{row.timepoint}}</strong> |
+          <strong>${{escapeHtml(row.timepoint)}}</strong> |
           safe ${{Number(row.delta_safe_fraction || 0).toFixed(3)}} |
           productive ${{Number(row.delta_productive_fraction || 0).toFixed(3)}} |
           risk ${{Number(row.delta_risk_fraction || 0).toFixed(3)}}

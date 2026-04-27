@@ -4,6 +4,7 @@ from eval.validation_trajectory_projection import (
     build_projection_rows,
     build_validation_trajectory_projection,
     project_embedding_pair_to_2d,
+    project_embeddings_to_2d,
 )
 
 
@@ -15,6 +16,13 @@ def test_project_embedding_pair_to_2d_returns_paired_coordinates():
 
     assert baseline.shape == (2, 2)
     assert perturbed.shape == (2, 2)
+
+
+def test_project_embeddings_to_2d_pads_low_dimensional_inputs():
+    projected = project_embeddings_to_2d([np.array([[0.0], [1.0]])])
+
+    assert projected.shape == (2, 2)
+    assert np.allclose(projected[:, 1], 0.0)
 
 
 def test_build_projection_rows_preserves_annotations_and_deltas():
@@ -71,5 +79,41 @@ def test_build_validation_trajectory_projection_packages_run_rows():
         ],
     )
 
-    assert projection["projection_method"] == "pca"
+    assert projection["projection_method"] == "shared_pca"
     assert projection["runs"][0]["rows"][0]["cell_id"] == "c1"
+
+
+def test_build_validation_trajectory_projection_uses_shared_run_coordinates():
+    projection = build_validation_trajectory_projection(
+        {
+            "track_name": "human_fibroblast_oskm",
+            "dataset_profile": "gse242423_human_fibroblast_oskm",
+            "track": {"timepoint_column": "timepoint"},
+        },
+        [
+            {
+                "label": "euclidean",
+                "alignment_mode": "euclidean_cosine",
+                "baseline_fused_embeddings": np.array([[0.0, 0.0], [1.0, 0.0]]),
+                "perturbed_fused_embeddings": np.array([[0.0, 1.0], [1.0, 1.0]]),
+                "fused_shift_rows": [
+                    {"cell_id": "e1", "timepoint": "D0"},
+                    {"cell_id": "e2", "timepoint": "D2"},
+                ],
+            },
+            {
+                "label": "projective",
+                "alignment_mode": "projective_distance",
+                "baseline_fused_embeddings": np.array([[10.0, 0.0], [11.0, 0.0]]),
+                "perturbed_fused_embeddings": np.array([[10.0, 1.0], [11.0, 1.0]]),
+                "fused_shift_rows": [
+                    {"cell_id": "p1", "timepoint": "D0"},
+                    {"cell_id": "p2", "timepoint": "D2"},
+                ],
+            },
+        ],
+    )
+
+    euclidean_x = projection["runs"][0]["rows"][0]["baseline_x"]
+    projective_x = projection["runs"][1]["rows"][0]["baseline_x"]
+    assert abs(projective_x - euclidean_x) > 1.0

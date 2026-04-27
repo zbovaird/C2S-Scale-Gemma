@@ -42,9 +42,11 @@ Transform the C2S-Scale-Gemma hybrid architecture into a specialized tool for mo
 
 ## Immediate Next Steps (Checklist)
 
+- [ ] **Real validation datasets:** Run the named validation bundle workflow against the selected OKSM time-course datasets and record which profiles/thresholds need adjustment.
+- [ ] **Artifact QA:** Use the one-command validation artifact export to review benchmark summaries, explorer HTML, shared trajectory projections, and cell-level trajectory deltas for real runs.
 - [ ] **HGNN / manifold layers:** Refactor the hyperbolic encoder path so Euclidean `torch.nn.Linear` (where it sits on the hyperbolic pathway) gives way to **`uhg` hyperbolic linear / manifold-native ops**, with **one** primary manifold (Lorentz vs Poincaré) end-to-end.
 - [ ] **Alignment script / losses:** Update contrastive alignment to use **hyperbolic distance** (e.g. `uhg.manifolds.Lorentz.dist` if Lorentz is the chosen model) instead of relying solely on `F.cosine_similarity` on embeddings that are not guaranteed to live in the same geometric space.
-- [ ] **Data prep (PBMC):** Isolate cells that **share regulatory pathways** with Yamanaka factors to stress-test “root-finding” before full reprogramming series are wired in.
+- [ ] **Data prep (PBMC / screening):** Isolate cells that **share regulatory pathways** with Yamanaka factors to stress-test “root-finding” before full reprogramming series are treated as biological evidence.
 
 ## Progress So Far
 
@@ -57,14 +59,19 @@ Transform the C2S-Scale-Gemma hybrid architecture into a specialized tool for mo
 - [x] Added config-driven reference labels, heuristic window profiles, and marker-panel scoring hooks for rejuvenation vs pluripotency risk.
 - [x] Added a configurable geometry-aware alignment mode (`projective_distance`) alongside the Euclidean cosine baseline.
 - [x] Added paired Euclidean-vs-projective ablation workflows, manifests, and safety/risk comparison plots for perturbation reports.
+- [x] Added named validation tracks with expected timepoints, primary metrics, recommendation thresholds, and benchmark summaries.
+- [x] Added validation explorer payloads, chart-ready trajectory series, and self-contained HTML explorer reports.
+- [x] Added cell-level validation trajectory datasets with timepoint/branch cohorts and projective-vs-Euclidean cell deltas.
+- [x] Added shared-PCA trajectory projection exports, branch/safe-zone projection plots, and an interactive projection HTML viewer.
+- [x] Added a one-command validation artifact export workflow that emits the main benchmark, explorer, trajectory dataset, projection, and HTML artifacts together.
 
 ## Updated Remaining Build
 
-1. Expand the dataset-backed validation bundle layer with track-specific manifests, expected timepoint contracts, and benchmark artifacts for fibroblast-to-iPSC and transient-partial-OSKM studies.
-2. Harden and validate the curvature-aware alignment mode on real OKSM datasets using the paired ablation workflow and track-specific metrics.
-3. Expand visuals from static QA plots into trajectory-centric hyperbolic views and a lightweight interactive explorer.
-4. Tighten documentation around config profiles, benchmark datasets, and expected interpretation limits.
-5. Refactor the HGNN stack toward more manifold-native operations once the validation loop is producing stable evidence.
+1. Run and harden the dataset-backed validation layer on real fibroblast-to-iPSC and transient-partial-OSKM studies, including threshold/profile calibration and artifact QA.
+2. Validate the curvature-aware/projective alignment mode on real OKSM datasets using paired ablations, shared trajectory projections, and track-specific recommendation evidence.
+3. Extend the current shared-PCA trajectory views toward hyperbolic/manifold-native views once real validation outputs show stable biological structure.
+4. Tighten documentation around config profiles, benchmark datasets, artifact interpretation limits, and what should/should not be inferred from projection views.
+5. Refactor the HGNN stack toward more manifold-native operations after the validation loop is producing stable evidence and the target manifold choice is clear.
 
 ---
 
@@ -80,6 +87,10 @@ Names in earlier sketches (e.g. `src/hgnn/hgnn_encoder.py`) differ from this tre
 | Graph build entrypoint | [`scripts/build_graphs.py`](scripts/build_graphs.py); building blocks under [`src/graphs/`](src/graphs/) (e.g. [`build_knn.py`](src/graphs/build_knn.py), [`build_grn.py`](src/graphs/build_grn.py)) |
 | Cell2Sentence / data | [`src/data/dataset.py`](src/data/dataset.py), [`src/data/collate.py`](src/data/collate.py) |
 | UHG adapters / projection | [`src/uhg_adapters/`](src/uhg_adapters/), [`docs/uhg_api.md`](docs/uhg_api.md) |
+| Validation tracks / bundle summaries | [`configs/validation_tracks.toml`](configs/validation_tracks.toml), [`src/eval/validation_tracks.py`](src/eval/validation_tracks.py), [`src/eval/validation_summary.py`](src/eval/validation_summary.py) |
+| Validation artifact exports | [`scripts/export_validation_bundle_artifacts.py`](scripts/export_validation_bundle_artifacts.py), [`src/eval/validation_bundle_exports.py`](src/eval/validation_bundle_exports.py) |
+| Trajectory datasets / projections | [`src/eval/validation_trajectory_dataset.py`](src/eval/validation_trajectory_dataset.py), [`src/eval/validation_trajectory_projection.py`](src/eval/validation_trajectory_projection.py), [`src/eval/validation_projection_visuals.py`](src/eval/validation_projection_visuals.py) |
+| Validation explorer HTML | [`src/eval/validation_explorer.py`](src/eval/validation_explorer.py), [`src/eval/validation_explorer_html.py`](src/eval/validation_explorer_html.py), [`src/eval/validation_trajectory_projection_html.py`](src/eval/validation_trajectory_projection_html.py) |
 
 During review, adjust this table if files move or split.
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from html import escape
 from typing import Any, Dict
 
 
@@ -13,7 +14,10 @@ def _serialize_payload(payload: Dict[str, Any]) -> str:
 def render_validation_trajectory_projection_html(payload: Dict[str, Any]) -> str:
     """Render a lightweight HTML viewer for trajectory projection artifacts."""
     serialized = _serialize_payload(payload)
-    title = payload.get("track_name") or "validation_trajectory_projection"
+    title = escape(
+        str(payload.get("track_name") or "validation_trajectory_projection"),
+        quote=True,
+    )
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -155,7 +159,13 @@ def render_validation_trajectory_projection_html(payload: Dict[str, Any]) -> str
       Object.entries(colorMap).forEach(([label, color]) => {{
         const item = document.createElement("div");
         item.className = "legend-item";
-        item.innerHTML = `<span class="swatch" style="background:${{color}}"></span><span>${{label}}</span>`;
+        const swatch = document.createElement("span");
+        swatch.className = "swatch";
+        swatch.style.background = color;
+        const labelText = document.createElement("span");
+        labelText.textContent = label;
+        item.appendChild(swatch);
+        item.appendChild(labelText);
         legend.appendChild(item);
       }});
     }}

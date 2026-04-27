@@ -19,13 +19,36 @@ def project_embedding_pair_to_2d(
     if baseline.ndim != 2:
         raise ValueError("Embedding arrays must be 2D.")
 
-    combined = np.concatenate([baseline, perturbed], axis=0)
-    centered = combined - np.mean(combined, axis=0, keepdims=True)
-    _, _, vt = np.linalg.svd(centered, full_matrices=False)
-    components = vt[:2].T
-    projected = centered @ components
+    projected = project_embeddings_to_2d([baseline, perturbed])
     n_rows = baseline.shape[0]
     return projected[:n_rows], projected[n_rows:]
+
+
+def project_embeddings_to_2d(embedding_blocks: Sequence[np.ndarray]) -> np.ndarray:
+    """Project one or more embedding blocks into a shared 2D PCA space."""
+    arrays = [np.asarray(block, dtype=float) for block in embedding_blocks]
+    if not arrays:
+        return np.empty((0, 2), dtype=float)
+    if arrays[0].ndim != 2:
+        raise ValueError("Embedding arrays must be 2D.")
+    embedding_dim = arrays[0].shape[1]
+    for array in arrays:
+        if array.ndim != 2:
+            raise ValueError("Embedding arrays must be 2D.")
+        if array.shape[1] != embedding_dim:
+            raise ValueError("All embedding arrays must share the same embedding dimension.")
+
+    combined = np.concatenate(arrays, axis=0)
+    if combined.shape[0] == 0:
+        return np.empty((0, 2), dtype=float)
+
+    centered = combined - np.mean(combined, axis=0, keepdims=True)
+    _, _, vt = np.linalg.svd(centered, full_matrices=False)
+    components = vt[: min(2, vt.shape[0])].T
+    projected = centered @ components
+    if projected.shape[1] < 2:
+        projected = np.pad(projected, ((0, 0), (0, 2 - projected.shape[1])))
+    return projected
 
 
 def build_projection_rows(
@@ -79,12 +102,31 @@ def build_validation_trajectory_projection(
 ) -> Dict[str, Any]:
     """Build a 2D trajectory projection artifact for a validation bundle."""
     timepoint_column = validation_manifest.get("track", {}).get("timepoint_column")
-    runs = []
+    projection_blocks = []
+    block_slices = []
+    cursor = 0
     for payload in run_payloads:
-        baseline_projection, perturbed_projection = project_embedding_pair_to_2d(
-            payload["baseline_fused_embeddings"],
-            payload["perturbed_fused_embeddings"],
+        baseline = np.asarray(payload["baseline_fused_embeddings"], dtype=float)
+        perturbed = np.asarray(payload["perturbed_fused_embeddings"], dtype=float)
+        if baseline.shape != perturbed.shape:
+            raise ValueError(
+                "baseline_fused_embeddings and perturbed_fused_embeddings must match shape."
+            )
+        projection_blocks.extend([baseline, perturbed])
+        n_rows = baseline.shape[0]
+        block_slices.append(
+            (cursor, cursor + n_rows, cursor + n_rows, cursor + n_rows * 2)
         )
+        cursor += n_rows * 2
+    shared_projection = project_embeddings_to_2d(projection_blocks)
+
+    runs = []
+    for payload, (base_start, base_end, pert_start, pert_end) in zip(
+        run_payloads,
+        block_slices,
+    ):
+        baseline_projection = shared_projection[base_start:base_end]
+        perturbed_projection = shared_projection[pert_start:pert_end]
         rows = build_projection_rows(
             label=str(payload.get("label", "unknown")),
             alignment_mode=str(payload.get("alignment_mode", "unknown")),
@@ -97,14 +139,14 @@ def build_validation_trajectory_projection(
             {
                 "label": payload.get("label", "unknown"),
                 "alignment_mode": payload.get("alignment_mode", "unknown"),
-                "projection_method": "pca",
+                "projection_method": "shared_pca",
                 "rows": rows,
             }
         )
     return {
         "track_name": validation_manifest.get("track_name"),
         "dataset_profile": validation_manifest.get("dataset_profile"),
-        "projection_method": "pca",
+        "projection_method": "shared_pca",
         "timepoint_column": timepoint_column,
         "runs": runs,
     }

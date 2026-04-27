@@ -29,3 +29,19 @@ def test_render_validation_explorer_html_includes_core_sections():
     assert "Validation Explorer" in html
     assert "Safe fraction across timepoints" in html
     assert "prefer_projective" in html
+
+
+def test_render_validation_explorer_html_escapes_data_values():
+    html = render_validation_explorer_html(
+        {
+            "track_name": "<unsafe>",
+            "overview_cards": [{"label": "<label>", "value": "<value>"}],
+            "run_table": [{"label": "<run>"}],
+            "charts": [],
+            "recommendation": {"evidence": {}},
+        }
+    )
+
+    assert "<title>&lt;unsafe&gt;</title>" in html
+    assert "${escapeHtml(card.label)}" in html
+    assert "${escapeHtml(row[col])}" in html
