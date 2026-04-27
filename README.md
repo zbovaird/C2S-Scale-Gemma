@@ -523,6 +523,15 @@ uv run scripts/qa_validation_artifacts.py \
   --artifact-manifest artifacts/validation_bundle/human_fibroblast_oskm/validation_artifacts_manifest.json
 ```
 
+To keep real-run review ordered and auditable, generate a validation review protocol:
+
+```bash
+uv run scripts/build_validation_review_protocol.py \
+  --track human_fibroblast_oskm \
+  --validation-manifest artifacts/validation_bundle/human_fibroblast_oskm/validation_bundle.json \
+  --output-root artifacts/validation_bundle/human_fibroblast_oskm
+```
+
 This produces:
 
 - `shift_histogram.png`
