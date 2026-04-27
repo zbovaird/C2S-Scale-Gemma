@@ -22,6 +22,8 @@ def test_build_validation_benchmark_rows_uses_primary_metrics_and_overlay_data()
                 "alignment_mode": "projective_distance",
                 "geometry_distance_backend": "projective_uhg_distance",
                 "geometry_fallback_used": False,
+                "fusion_graph_source": "euclidean_embeddings",
+                "alignment_graph_source": "hyperbolic_embeddings",
                 "dataset_profile": "gse242423_human_fibroblast_oskm",
                 "embedding_summary": {
                     "fused_embeddings": {
@@ -52,6 +54,7 @@ def test_build_validation_benchmark_rows_uses_primary_metrics_and_overlay_data()
     assert rows[0]["safe_fraction"] == 0.5
     assert rows[0]["geometry_distance_backend"] == "projective_uhg_distance"
     assert rows[0]["geometry_fallback_used"] is False
+    assert rows[0]["alignment_graph_source"] == "hyperbolic_embeddings"
 
 
 def test_build_validation_benchmark_summary_picks_lowest_shift_run():

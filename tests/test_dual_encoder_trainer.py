@@ -108,4 +108,34 @@ def test_dual_encoder_trainer_uses_hyperbolic_graph_space_for_alignment():
 
     assert loss_dict["alignment_graph_embeddings"].shape == (3, 4)
     assert loss_dict["graph_embeddings"].shape == (3, 4)
+    assert loss_dict["alignment_graph_source"] == "hyperbolic_embeddings"
+    assert loss_dict["fusion_graph_source"] == "euclidean_embeddings"
     assert torch.isfinite(loss_dict["alignment_loss"])
+
+
+def test_dual_encoder_trainer_get_embeddings_returns_alignment_graph_space():
+    trainer = DualEncoderTrainer(
+        hgnn_encoder=DummyHyperbolicGraphModel(),
+        text_model=DummyTextModel(),
+        fusion_head=DummyFusionHead(),
+        contrastive_loss=InfoNCELoss(
+            hard_negative_mining=False,
+            alignment_mode="projective_distance",
+            shared_dim=4,
+            text_projection_type="linear",
+        ),
+        device=torch.device("cpu"),
+        config={"model": {"hgnn": {"input_dim": 4}}},
+    )
+    dataloader = [
+        {
+            "input_ids": torch.randint(0, 16, (2, 5)),
+            "attention_mask": torch.ones(2, 5, dtype=torch.long),
+        }
+    ]
+
+    embeddings = trainer.get_embeddings(dataloader)
+
+    assert embeddings["graph_embeddings"].shape == (2, 4)
+    assert embeddings["alignment_graph_embeddings"].shape == (2, 4)
+    assert embeddings["alignment_graph_source"] == "hyperbolic_embeddings"

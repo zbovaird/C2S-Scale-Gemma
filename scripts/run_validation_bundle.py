@@ -121,6 +121,12 @@ def main() -> None:
                 "geometry_fallback_used": result["overlay_summary"]
                 .get("alignment", {})
                 .get("geometry_fallback_used"),
+                "fusion_graph_source": result["overlay_summary"]
+                .get("alignment", {})
+                .get("fusion_graph_source"),
+                "alignment_graph_source": result["overlay_summary"]
+                .get("alignment", {})
+                .get("alignment_graph_source"),
                 "dataset_profile": result["overlay_summary"].get("dataset_profile"),
             }
         )

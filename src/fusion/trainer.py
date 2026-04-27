@@ -44,6 +44,8 @@ class DualEncoderTrainer(nn.Module):
         self.device = device or torch.device(
             "cuda" if torch.cuda.is_available() else "cpu"
         )
+        self.last_fusion_graph_source = "unknown"
+        self.last_alignment_graph_source = "unknown"
 
         if self.hgnn_encoder is None or self.text_model is None:
             raise ValueError("Both graph and text models must be provided.")
@@ -96,6 +98,8 @@ class DualEncoderTrainer(nn.Module):
             "text_embeddings": text_embeddings,
             "graph_embeddings": graph_embeddings,
             "alignment_graph_embeddings": alignment_graph_embeddings,
+            "fusion_graph_source": self.last_fusion_graph_source,
+            "alignment_graph_source": self.last_alignment_graph_source,
             "fused_embeddings": fused_embeddings,
         }
 
@@ -138,6 +142,7 @@ class DualEncoderTrainer(nn.Module):
 
         all_text_embeddings = []
         all_graph_embeddings = []
+        all_alignment_graph_embeddings = []
         all_fused_embeddings = []
 
         with torch.no_grad():
@@ -146,8 +151,12 @@ class DualEncoderTrainer(nn.Module):
                 text_embeddings = self.get_text_representation(batch)
                 graph_outputs = self._encode_graph_batch(batch)
                 graph_embeddings = self._select_graph_embeddings_for_fusion(graph_outputs)
+                alignment_graph_embeddings = self._select_graph_embeddings_for_alignment(
+                    graph_outputs
+                )
                 all_text_embeddings.append(text_embeddings)
                 all_graph_embeddings.append(graph_embeddings)
+                all_alignment_graph_embeddings.append(alignment_graph_embeddings)
 
                 if return_fused:
                     all_fused_embeddings.append(
@@ -161,6 +170,9 @@ class DualEncoderTrainer(nn.Module):
         result = {
             "text_embeddings": torch.cat(all_text_embeddings, dim=0),
             "graph_embeddings": torch.cat(all_graph_embeddings, dim=0),
+            "alignment_graph_embeddings": torch.cat(all_alignment_graph_embeddings, dim=0),
+            "fusion_graph_source": self.last_fusion_graph_source,
+            "alignment_graph_source": self.last_alignment_graph_source,
         }
         if return_fused and all_fused_embeddings:
             result["fused_embeddings"] = torch.cat(all_fused_embeddings, dim=0)
@@ -201,14 +213,21 @@ class DualEncoderTrainer(nn.Module):
     def _select_graph_embeddings_for_fusion(self, graph_outputs: Any) -> torch.Tensor:
         if isinstance(graph_outputs, dict):
             if graph_outputs.get("euclidean_embeddings") is not None:
+                self.last_fusion_graph_source = "euclidean_embeddings"
                 return graph_outputs["euclidean_embeddings"]
             if graph_outputs.get("graph_embeddings") is not None:
+                self.last_fusion_graph_source = "graph_embeddings"
                 return graph_outputs["graph_embeddings"]
-            graph_embeddings = self._extract_hyperbolic_graph_embeddings(graph_outputs)
+            graph_embeddings = self._extract_hyperbolic_graph_embeddings(
+                graph_outputs,
+                source_attr="last_fusion_graph_source",
+            )
         else:
             graph_embeddings = graph_outputs
+            self.last_fusion_graph_source = "direct_graph_outputs"
 
         if self.radial_projector is not None:
+            self.last_fusion_graph_source = f"{self.last_fusion_graph_source}:radial_projected"
             return self.radial_projector(graph_embeddings)
         return graph_embeddings
 
@@ -218,23 +237,36 @@ class DualEncoderTrainer(nn.Module):
                 return self._extract_hyperbolic_graph_embeddings(
                     graph_outputs,
                     fallback_to_projected=True,
+                    source_attr="last_alignment_graph_source",
                 )
+            self.last_alignment_graph_source = "direct_graph_outputs"
             return graph_outputs
-        return self._select_graph_embeddings_for_fusion(graph_outputs)
+        alignment_embeddings = self._select_graph_embeddings_for_fusion(graph_outputs)
+        self.last_alignment_graph_source = self.last_fusion_graph_source
+        return alignment_embeddings
 
     def _extract_hyperbolic_graph_embeddings(
         self,
         graph_outputs: Dict[str, torch.Tensor],
         fallback_to_projected: bool = False,
+        source_attr: str | None = None,
     ) -> torch.Tensor:
         if graph_outputs.get("hyperbolic_embeddings") is not None:
+            if source_attr:
+                setattr(self, source_attr, "hyperbolic_embeddings")
             return graph_outputs["hyperbolic_embeddings"]
         if graph_outputs.get("node_embeddings") is not None:
+            if source_attr:
+                setattr(self, source_attr, "node_embeddings")
             return graph_outputs["node_embeddings"]
         if fallback_to_projected:
             if graph_outputs.get("euclidean_embeddings") is not None:
+                if source_attr:
+                    setattr(self, source_attr, "euclidean_embeddings:fallback")
                 return graph_outputs["euclidean_embeddings"]
             if graph_outputs.get("graph_embeddings") is not None:
+                if source_attr:
+                    setattr(self, source_attr, "graph_embeddings:fallback")
                 return graph_outputs["graph_embeddings"]
         raise KeyError("Graph encoder outputs missing requested embedding tensors.")
 

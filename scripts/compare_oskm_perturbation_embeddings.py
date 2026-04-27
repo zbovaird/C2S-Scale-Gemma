@@ -193,7 +193,9 @@ def _probe_alignment_backend(
 ) -> Dict[str, Any]:
     """Run a tiny contrastive pass to expose the configured geometry backend."""
     text_embeddings = embeddings.get("text_embeddings")
-    graph_embeddings = embeddings.get("graph_embeddings")
+    graph_embeddings = embeddings.get("alignment_graph_embeddings")
+    if graph_embeddings is None:
+        graph_embeddings = embeddings.get("graph_embeddings")
     if text_embeddings is None or graph_embeddings is None:
         return {
             "geometry_distance_backend": "unavailable",
@@ -390,6 +392,8 @@ def run_embedding_comparison(
                 "learned",
             ),
             **alignment_backend,
+            "fusion_graph_source": baseline_embeddings.get("fusion_graph_source"),
+            "alignment_graph_source": baseline_embeddings.get("alignment_graph_source"),
         },
         "reference_labels": {
             "somatic_labels": somatic_labels,

@@ -47,6 +47,7 @@ def test_write_markdown_summary_includes_geometry_backend_metadata(tmp_path):
                     "risk_fraction": 0.1,
                     "geometry_distance_backend": "projective_uhg_distance",
                     "geometry_fallback_used": False,
+                    "alignment_graph_source": "hyperbolic_embeddings",
                 }
             ],
             "timepoint_summaries": {},
@@ -57,3 +58,4 @@ def test_write_markdown_summary_includes_geometry_backend_metadata(tmp_path):
     markdown = output_path.read_text(encoding="utf-8")
     assert "geometry_backend=projective_uhg_distance" in markdown
     assert "geometry_fallback_used=False" in markdown
+    assert "alignment_graph_source=hyperbolic_embeddings" in markdown

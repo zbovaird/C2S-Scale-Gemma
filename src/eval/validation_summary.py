@@ -52,6 +52,14 @@ def build_validation_benchmark_rows(
                 "geometry_fallback_used",
                 alignment_summary.get("geometry_fallback_used"),
             ),
+            "fusion_graph_source": payload.get(
+                "fusion_graph_source",
+                alignment_summary.get("fusion_graph_source"),
+            ),
+            "alignment_graph_source": payload.get(
+                "alignment_graph_source",
+                alignment_summary.get("alignment_graph_source"),
+            ),
             "dataset_profile": payload.get("dataset_profile"),
             "mean_l2_shift": float(embedding_summary.get("mean_l2_shift", 0.0)),
             "mean_cosine_similarity": float(
