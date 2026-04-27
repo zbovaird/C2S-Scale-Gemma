@@ -98,6 +98,12 @@ def render_validation_explorer_html(payload: Dict[str, Any]) -> str:
     <div class="charts" id="chart-grid"></div>
   </section>
   <section>
+    <h2>Trajectory Geometry Summary</h2>
+    <div class="panel">
+      <table id="geometry-summary-table"></table>
+    </div>
+  </section>
+  <section>
     <h2>Recommendation Evidence</h2>
     <div class="evidence-list">
       <div class="panel">
@@ -150,6 +156,18 @@ def render_validation_explorer_html(payload: Dict[str, Any]) -> str:
       const rows = payload.run_table || [];
       if (!rows.length) {{
         table.innerHTML = "<tr><td>No runs available.</td></tr>";
+        return;
+      }}
+      const columns = Object.keys(rows[0]);
+      const thead = `<thead><tr>${{columns.map((col) => `<th>${{escapeHtml(col)}}</th>`).join("")}}</tr></thead>`;
+      const tbody = `<tbody>${{rows.map((row) => `<tr>${{columns.map((col) => `<td>${{escapeHtml(row[col])}}</td>`).join("")}}</tr>`).join("")}}</tbody>`;
+      table.innerHTML = thead + tbody;
+    }}
+
+    function renderGenericTable(targetId, rows) {{
+      const table = document.getElementById(targetId);
+      if (!rows.length) {{
+        table.innerHTML = "<tr><td>No rows available.</td></tr>";
         return;
       }}
       const columns = Object.keys(rows[0]);
@@ -268,6 +286,7 @@ def render_validation_explorer_html(payload: Dict[str, Any]) -> str:
     renderCards();
     renderRunTable();
     renderCharts();
+    renderGenericTable("geometry-summary-table", payload.trajectory_geometry_summary || []);
     const evidence = payload.recommendation?.evidence || {{}};
     renderEvidence("supporting-evidence", evidence.top_supporting_timepoints || []);
     renderEvidence("concerning-evidence", evidence.top_concerning_timepoints || []);

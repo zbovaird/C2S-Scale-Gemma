@@ -79,6 +79,7 @@ def build_validation_explorer_payload(summary: Dict[str, Any]) -> Dict[str, Any]
         "run_table": runs,
         "timepoint_summaries": summary.get("timepoint_summaries", {}),
         "timepoint_comparison": summary.get("timepoint_comparison", []),
+        "trajectory_geometry_summary": summary.get("trajectory_geometry_summary", []),
         "charts": charts,
         "recommendation": recommendation,
         "interpretation_limits": summary.get("interpretation_limits", []),
@@ -102,6 +103,11 @@ def build_validation_explorer_payload(summary: Dict[str, Any]) -> Dict[str, Any]
                 "id": "timepoint_comparison",
                 "title": "Projective vs Euclidean deltas",
                 "kind": "delta_series",
+            },
+            {
+                "id": "trajectory_geometry_summary",
+                "title": "Trajectory geometry summary",
+                "kind": "table",
             },
             {
                 "id": "recommendation_evidence",

@@ -13,6 +13,7 @@ def test_build_validation_explorer_payload_exposes_core_sections():
             "runs": [{"label": "projective"}],
             "timepoint_summaries": {"projective": [{"timepoint": "D2"}]},
             "timepoint_comparison": [{"timepoint": "D2"}],
+            "trajectory_geometry_summary": [{"label": "projective"}],
             "recommendation": {"status": "prefer_projective"},
             "interpretation_limits": ["Do not over-interpret projection views."],
         }
@@ -21,6 +22,7 @@ def test_build_validation_explorer_payload_exposes_core_sections():
     assert payload["overview_cards"][0]["value"] == "projective"
     assert payload["recommendation"]["status"] == "prefer_projective"
     assert payload["interpretation_limits"] == ["Do not over-interpret projection views."]
+    assert payload["trajectory_geometry_summary"][0]["label"] == "projective"
     assert payload["explorer_sections"][0]["id"] == "run_table"
     assert payload["explorer_sections"][2]["id"] == "charts"
     assert payload["explorer_sections"][-1]["id"] == "interpretation_limits"

@@ -8,6 +8,9 @@ def test_render_validation_explorer_html_includes_core_sections():
             "dataset_profile": "gse242423_human_fibroblast_oskm",
             "overview_cards": [{"label": "Recommendation", "value": "prefer_projective"}],
             "run_table": [{"label": "projective", "safe_fraction": 0.4}],
+            "trajectory_geometry_summary": [
+                {"label": "projective", "mean_geometry_distance": 0.4}
+            ],
             "interpretation_limits": ["Representation-level evidence only."],
             "charts": [
                 {
@@ -29,6 +32,8 @@ def test_render_validation_explorer_html_includes_core_sections():
     assert "<title>human_fibroblast_oskm</title>" in html
     assert "Validation Explorer" in html
     assert "Safe fraction across timepoints" in html
+    assert "Trajectory Geometry Summary" in html
+    assert "geometry-summary-table" in html
     assert "prefer_projective" in html
     assert "Representation-level evidence only." in html
 

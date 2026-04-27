@@ -483,6 +483,7 @@ uv run scripts/export_validation_bundle_artifacts.py \
 
 This writes a consolidated artifact bundle including the benchmark summary, explorer payload and HTML, trajectory dataset, trajectory geometry distances, trajectory projection, projection HTML, and a small manifest of generated files.
 The benchmark summary includes a compact trajectory geometry section with mean/max per-run geometry distances and backend/fallback metadata.
+The validation explorer payload and HTML render the same trajectory geometry summary as a table for quick review.
 The benchmark summary and explorer artifacts include interpretation-limit notes so projection views, heuristic safe-window calls, and alignment recommendations are kept separate from biological or in vivo safety claims.
 Run rows also include the geometry distance backend and graph embedding source, making it visible when a projective alignment run used UHG distance versus a Euclidean fallback and whether alignment consumed hyperbolic or projected graph embeddings.
 Set `fusion.require_geometry_backend = true` for validation runs that should fail fast instead of allowing the Euclidean fallback for projective/hyperbolic alignment modes.
