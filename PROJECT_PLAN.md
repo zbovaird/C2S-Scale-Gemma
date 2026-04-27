@@ -44,6 +44,7 @@ Transform the C2S-Scale-Gemma hybrid architecture into a specialized tool for mo
 
 - [ ] **Real validation datasets:** Run the named validation bundle workflow against the selected OKSM time-course datasets and record which profiles/thresholds need adjustment.
 - [x] **Dataset readiness manifest:** Add a readiness report that connects validation tracks, dataset profiles, local data hints, and missing artifacts before expensive validation runs.
+- [x] **Threshold calibration audit:** Add checks for heuristic window profiles and recommendation thresholds before treating validation outputs as calibrated.
 - [x] **Validation preflight / artifact QA:** Add preflight checks for validation inputs and QA checks for exported artifact bundles before treating a run as review-ready.
 - [x] **Interpretation-limit guardrails:** Carry explicit biological-claim limits into validation summaries, explorer payloads, and markdown reports.
 - [ ] **Artifact review:** Use the one-command validation artifact export to review benchmark summaries, explorer HTML, shared trajectory projections, and cell-level trajectory deltas for real runs.
@@ -70,6 +71,7 @@ Transform the C2S-Scale-Gemma hybrid architecture into a specialized tool for mo
 - [x] Added validation preflight checks and exported-artifact QA so real dataset runs fail early when inputs or outputs are incomplete.
 - [x] Added validation dataset readiness reporting so tracks can be triaged as ready, missing data, or metadata-incomplete before model execution.
 - [x] Added interpretation-limit metadata to validation outputs so heuristic model findings stay separated from biological safety claims.
+- [x] Added calibration-audit reporting for heuristic window profiles and track-level recommendation thresholds.
 
 ## Updated Remaining Build
 

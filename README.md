@@ -493,6 +493,15 @@ uv run scripts/report_validation_readiness.py \
 
 This flags each validation track as `ready`, `needs_data`, or `incomplete_metadata` based on profile metadata and local baseline/perturbed data availability.
 
+Audit profile and recommendation thresholds before treating validation outputs as calibrated:
+
+```bash
+uv run scripts/report_validation_calibration.py \
+  --output-path artifacts/validation_calibration.json
+```
+
+This checks heuristic window profiles and track recommendation thresholds for missing values, out-of-range values, and inconsistent ordering.
+
 The bundle runner also performs preflight checks for the selected track, input datasets, configs, checkpoints, and dataset-profile registry. To run those checks without model execution:
 
 ```bash
