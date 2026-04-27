@@ -507,6 +507,20 @@ uv run scripts/build_validation_data_manifest.py \
 This lists accessions, source URLs, expected observation columns, expected timepoints, and local baseline/perturbed data targets for each validation track.
 For GEO supplementary files, the manifest includes a reviewable download plan with an inferred HTTPS URL and `curl` command, but it does not download large data automatically.
 
+After downloading a real `.h5ad`, inspect its schema before validation:
+
+```bash
+uv run scripts/inspect_validation_dataset.py \
+  --input data/raw/GSE176206_adipo_screen.h5ad.gz \
+  --output artifacts/GSE176206_dataset_inspection.json \
+  --dataset-name GSE176206_adipo_screen \
+  --species mouse \
+  --cell-type-column cell_type \
+  --timepoint-column phase
+```
+
+This checks cell/gene counts, available `obs` columns, configured timepoint/cell-type columns, and OSKM gene resolution.
+
 For PBMC or screening-style datasets, `biology.regulatory_screening` provides OSKM-adjacent pathway panels and cell-level ranking helpers for identifying cells with shared regulatory activity before full reprogramming-series validation.
 
 To run the screening helper on a candidate `.h5ad` file:
