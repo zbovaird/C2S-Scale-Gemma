@@ -64,6 +64,7 @@ Transform the C2S-Scale-Gemma hybrid architecture into a specialized tool for mo
 - [x] **Validation data manifest:** Export accessions, source URLs, expected columns/timepoints, and local data targets for configured validation tracks.
 - [x] **Regulatory pathway screening:** Add OSKM-adjacent pathway scoring helpers for PBMC/screening datasets before full biological interpretation.
 - [x] **Regulatory screening report:** Add a CLI/report workflow for ranking candidate `.h5ad` datasets by OSKM-adjacent pathway activity.
+- [x] **Dataset download plans:** Add inferred GEO supplementary download URLs/commands to validation data manifests for review before large downloads.
 - [ ] **Artifact review:** Use the one-command validation artifact export to review benchmark summaries, explorer HTML, shared trajectory projections, and cell-level trajectory deltas for real runs.
 - [ ] **HGNN / manifold layers:** Refactor the hyperbolic encoder path so Euclidean `torch.nn.Linear` (where it sits on the hyperbolic pathway) gives way to **`uhg` hyperbolic linear / manifold-native ops**, with **one** primary manifold (Lorentz vs Poincaré) end-to-end.
 - [ ] **Alignment script / losses:** Update contrastive alignment to use **hyperbolic distance** (e.g. `uhg.manifolds.Lorentz.dist` if Lorentz is the chosen model) instead of relying solely on `F.cosine_similarity` on embeddings that are not guaranteed to live in the same geometric space.
@@ -106,6 +107,7 @@ Transform the C2S-Scale-Gemma hybrid architecture into a specialized tool for mo
 - [x] Added validation data manifests for dataset acquisition/review before real benchmark runs.
 - [x] Added OSKM-adjacent regulatory pathway screening helpers to rank cells by shared regulatory activity.
 - [x] Added regulatory screening report exports for candidate PBMC/screening datasets.
+- [x] Added reviewable GEO supplementary download plans to validation data manifests without automatically downloading large files.
 
 ## Updated Remaining Build
 

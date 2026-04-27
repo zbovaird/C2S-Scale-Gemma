@@ -505,6 +505,7 @@ uv run scripts/build_validation_data_manifest.py \
 ```
 
 This lists accessions, source URLs, expected observation columns, expected timepoints, and local baseline/perturbed data targets for each validation track.
+For GEO supplementary files, the manifest includes a reviewable download plan with an inferred HTTPS URL and `curl` command, but it does not download large data automatically.
 
 For PBMC or screening-style datasets, `biology.regulatory_screening` provides OSKM-adjacent pathway panels and cell-level ranking helpers for identifying cells with shared regulatory activity before full reprogramming-series validation.
 
