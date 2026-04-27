@@ -71,11 +71,18 @@ def test_build_validation_artifact_qa_validates_manifest_outputs(tmp_path):
     summary_json = tmp_path / "validation_benchmark_summary.json"
     explorer_payload = tmp_path / "validation_explorer_payload.json"
     trajectory_dataset = tmp_path / "validation_trajectory_dataset.json"
+    trajectory_geometry = tmp_path / "validation_trajectory_geometry.json"
     trajectory_projection = tmp_path / "validation_trajectory_projection.json"
     markdown = tmp_path / "VALIDATION_BENCHMARK.md"
     explorer_html = tmp_path / "validation_explorer.html"
     projection_html = tmp_path / "validation_trajectory_projection.html"
-    for path in (summary_json, explorer_payload, trajectory_dataset, trajectory_projection):
+    for path in (
+        summary_json,
+        explorer_payload,
+        trajectory_dataset,
+        trajectory_geometry,
+        trajectory_projection,
+    ):
         path.write_text(json.dumps({"ok": True}), encoding="utf-8")
     for path in (markdown, explorer_html, projection_html):
         path.write_text("ok", encoding="utf-8")
@@ -89,6 +96,7 @@ def test_build_validation_artifact_qa_validates_manifest_outputs(tmp_path):
                 "explorer_payload": str(explorer_payload),
                 "explorer_html": str(explorer_html),
                 "trajectory_dataset": str(trajectory_dataset),
+                "trajectory_geometry": str(trajectory_geometry),
                 "trajectory_projection": str(trajectory_projection),
                 "trajectory_projection_html": str(projection_html),
             }

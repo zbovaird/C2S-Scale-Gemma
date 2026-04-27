@@ -15,6 +15,7 @@ def test_build_validation_artifact_paths_returns_expected_bundle_outputs():
     assert paths["summary_json"].endswith("validation_benchmark_summary.json")
     assert paths["explorer_html"].endswith("validation_explorer.html")
     assert paths["trajectory_dataset"].endswith("validation_trajectory_dataset.json")
+    assert paths["trajectory_geometry"].endswith("validation_trajectory_geometry.json")
     assert paths["trajectory_projection_html"].endswith(
         "validation_trajectory_projection.html"
     )
@@ -112,9 +113,12 @@ def test_export_validation_bundle_artifacts_writes_main_outputs(tmp_path):
 
     artifact_paths = export_validation_bundle_artifacts(validation_manifest_path)
     projection = json.loads(Path(artifact_paths["trajectory_projection"]).read_text())
+    geometry = json.loads(Path(artifact_paths["trajectory_geometry"]).read_text())
 
     assert Path(artifact_paths["summary_json"]).exists()
     assert Path(artifact_paths["explorer_html"]).exists()
     assert Path(artifact_paths["trajectory_dataset"]).exists()
+    assert Path(artifact_paths["trajectory_geometry"]).exists()
     assert Path(artifact_paths["trajectory_projection_html"]).exists()
     assert projection["projection_method"] == "shared_pca"
+    assert geometry["artifact_type"] == "validation_trajectory_geometry"

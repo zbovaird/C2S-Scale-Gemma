@@ -21,6 +21,7 @@ REQUIRED_ARTIFACT_KEYS = (
     "explorer_payload",
     "explorer_html",
     "trajectory_dataset",
+    "trajectory_geometry",
     "trajectory_projection",
     "trajectory_projection_html",
 )
@@ -29,6 +30,7 @@ JSON_ARTIFACT_KEYS = (
     "summary_json",
     "explorer_payload",
     "trajectory_dataset",
+    "trajectory_geometry",
     "trajectory_projection",
 )
 

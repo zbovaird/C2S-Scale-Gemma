@@ -12,6 +12,7 @@ from eval.validation_explorer_html import render_validation_explorer_html
 from eval.validation_markdown import write_markdown_summary
 from eval.validation_summary import build_validation_benchmark_summary, load_json_file
 from eval.validation_trajectory_dataset import build_validation_trajectory_dataset
+from eval.validation_trajectory_geometry import build_validation_trajectory_geometry
 from eval.validation_trajectory_projection import build_validation_trajectory_projection
 from eval.validation_trajectory_projection_html import (
     render_validation_trajectory_projection_html,
@@ -27,6 +28,7 @@ def build_validation_artifact_paths(output_dir: str | Path) -> dict:
         "explorer_payload": str(root / "validation_explorer_payload.json"),
         "explorer_html": str(root / "validation_explorer.html"),
         "trajectory_dataset": str(root / "validation_trajectory_dataset.json"),
+        "trajectory_geometry": str(root / "validation_trajectory_geometry.json"),
         "trajectory_projection": str(root / "validation_trajectory_projection.json"),
         "trajectory_projection_html": str(root / "validation_trajectory_projection.html"),
         "artifact_manifest": str(root / "validation_artifacts_manifest.json"),
@@ -109,6 +111,15 @@ def export_validation_bundle_artifacts(
     )
     Path(artifact_paths["trajectory_dataset"]).write_text(
         json.dumps(trajectory_dataset, indent=2),
+        encoding="utf-8",
+    )
+
+    trajectory_geometry = build_validation_trajectory_geometry(
+        validation_manifest,
+        trajectory_run_payloads,
+    )
+    Path(artifact_paths["trajectory_geometry"]).write_text(
+        json.dumps(trajectory_geometry, indent=2),
         encoding="utf-8",
     )
 
