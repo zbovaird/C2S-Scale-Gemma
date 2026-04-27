@@ -539,6 +539,14 @@ uv run scripts/report_manifold_readiness.py \
   --output-path artifacts/manifold_readiness.json
 ```
 
+Convert the readiness findings into an ordered implementation plan:
+
+```bash
+uv run scripts/build_manifold_refactor_plan.py \
+  --readiness-report artifacts/manifold_readiness.json \
+  --output-path artifacts/manifold_refactor_plan.json
+```
+
 This produces:
 
 - `shift_histogram.png`
