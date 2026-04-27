@@ -17,6 +17,7 @@ except Exception:  # pragma: no cover - optional runtime dependency
     ProjectiveUHG = None
 
 from uhg_adapters.euclid_to_uhg import EuclideanToUHG
+from hgnn.manifold_ops import TangentSpaceLinear
 
 logger = logging.getLogger(__name__)
 
@@ -165,7 +166,7 @@ class InfoNCELoss(nn.Module):
                 projection_type=self.text_projection_type,
             ).to(text_embeddings.device)
             if inferred_graph_dim != inferred_shared_dim:
-                self.graph_to_geometry = nn.Linear(
+                self.graph_to_geometry = TangentSpaceLinear(
                     inferred_graph_dim,
                     inferred_shared_dim,
                 ).to(graph_embeddings.device)

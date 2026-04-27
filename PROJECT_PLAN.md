@@ -55,6 +55,7 @@ Transform the C2S-Scale-Gemma hybrid architecture into a specialized tool for mo
 - [x] **Trainer geometry source tracking:** Return alignment graph embeddings separately from fusion graph embeddings and report which graph representation each path consumed.
 - [x] **Encoder tangent adapters:** Replace anonymous Euclidean projection maps in the UHG encoder with explicit tangent-space linear adapters.
 - [x] **Layer tangent adapters:** Replace anonymous Euclidean feature maps in UHG GraphSAGE, GIN, and attention layers with explicit tangent-space adapters.
+- [x] **Alignment tangent adapter:** Replace the alignment graph-dimension projection fallback with an explicit tangent-space adapter.
 - [ ] **Artifact review:** Use the one-command validation artifact export to review benchmark summaries, explorer HTML, shared trajectory projections, and cell-level trajectory deltas for real runs.
 - [ ] **HGNN / manifold layers:** Refactor the hyperbolic encoder path so Euclidean `torch.nn.Linear` (where it sits on the hyperbolic pathway) gives way to **`uhg` hyperbolic linear / manifold-native ops**, with **one** primary manifold (Lorentz vs Poincaré) end-to-end.
 - [ ] **Alignment script / losses:** Update contrastive alignment to use **hyperbolic distance** (e.g. `uhg.manifolds.Lorentz.dist` if Lorentz is the chosen model) instead of relying solely on `F.cosine_similarity` on embeddings that are not guaranteed to live in the same geometric space.
@@ -88,6 +89,7 @@ Transform the C2S-Scale-Gemma hybrid architecture into a specialized tool for mo
 - [x] Added trainer graph-source metadata so validation artifacts can distinguish fusion embeddings from alignment embeddings.
 - [x] Added explicit `TangentSpaceLinear` adapters for UHG encoder input/output and multi-scale fusion projections as a first encoder-path manifold refactor slice.
 - [x] Added explicit `TangentSpaceLinear` adapters for UHG layer self/neighbor, MLP, and attention projections.
+- [x] Added an explicit `TangentSpaceLinear` adapter for graph-to-geometry projection inside geometry-aware InfoNCE alignment.
 
 ## Updated Remaining Build
 

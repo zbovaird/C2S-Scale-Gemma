@@ -1,6 +1,7 @@
 import torch
 
 from fusion.align_losses import InfoNCELoss
+from hgnn.manifold_ops import TangentSpaceLinear
 
 
 def test_info_nce_accepts_hard_negative_weight():
@@ -49,3 +50,21 @@ def test_info_nce_reports_euclidean_backend_for_cosine_mode():
 
     assert loss_dict["geometry_distance_backend"] == "euclidean_cosine"
     assert loss_dict["geometry_fallback_used"] is False
+
+
+def test_info_nce_uses_tangent_adapter_when_graph_dim_needs_projection():
+    text = torch.tensor([[1.0, 0.2], [0.1, 1.0]], dtype=torch.float32)
+    graph = torch.tensor([[0.9, 0.1, 0.3], [0.2, 0.8, 0.4]], dtype=torch.float32)
+    loss = InfoNCELoss(
+        hard_negative_mining=False,
+        alignment_mode="projective_distance",
+        text_dim=2,
+        graph_dim=3,
+        shared_dim=2,
+        text_projection_type="linear",
+    )
+
+    loss_dict = loss(text, graph)
+
+    assert isinstance(loss.graph_to_geometry, TangentSpaceLinear)
+    assert loss_dict["similarity_matrix"].shape == (2, 2)
