@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import importlib
 import re
 from pathlib import Path
 from typing import Any, Mapping, Sequence
@@ -51,6 +52,13 @@ DEFAULT_RESOLVED_ADAPTER_TARGETS = (
         "pattern": r"TangentSpaceLinear",
         "description": "Explicit tangent-space adapter in alignment graph projection.",
     },
+)
+
+DEFAULT_UHG_CAPABILITY_MODULES = (
+    "uhg.projective",
+    "uhg.layers",
+    "uhg.nn",
+    "uhg.manifolds",
 )
 
 
@@ -114,11 +122,51 @@ def count_resolved_adapters(
     return rows
 
 
+def probe_uhg_capabilities(
+    module_names: Sequence[str] = DEFAULT_UHG_CAPABILITY_MODULES,
+) -> list[dict]:
+    """Probe import-time availability of UHG modules needed for native geometry ops."""
+    rows = []
+    for module_name in module_names:
+        try:
+            module = importlib.import_module(module_name)
+        except Exception as exc:
+            rows.append(
+                {
+                    "module": module_name,
+                    "available": False,
+                    "error_type": type(exc).__name__,
+                    "error": str(exc),
+                    "operator_hints": [],
+                }
+            )
+            continue
+        operator_hints = [
+            name
+            for name in dir(module)
+            if any(
+                token in name.lower()
+                for token in ("linear", "layer", "lorentz", "poincare", "projective")
+            )
+        ]
+        rows.append(
+            {
+                "module": module_name,
+                "available": True,
+                "error_type": None,
+                "error": None,
+                "operator_hints": operator_hints,
+            }
+        )
+    return rows
+
+
 def build_manifold_readiness_report(
     *,
     repo_root: str | Path,
     targets: Sequence[Mapping[str, Any]] = DEFAULT_MANIFOLD_AUDIT_TARGETS,
     resolved_targets: Sequence[Mapping[str, Any]] = DEFAULT_RESOLVED_ADAPTER_TARGETS,
+    include_uhg_capabilities: bool = True,
 ) -> dict:
     """Build a static manifold-readiness report for geometry-path refactors."""
     findings = []
@@ -130,12 +178,20 @@ def build_manifold_readiness_report(
         repo_root=repo_root,
         targets=resolved_targets,
     )
+    uhg_capabilities = (
+        probe_uhg_capabilities() if include_uhg_capabilities else []
+    )
+    n_unavailable_uhg_modules = sum(
+        1 for row in uhg_capabilities if not bool(row["available"])
+    )
     return {
         "status": "needs_refactor" if n_blockers else "review",
         "n_findings": len(findings),
         "n_blockers": n_blockers,
         "n_warnings": n_warnings,
         "n_resolved_adapters": sum(row["count"] for row in resolved_adapters),
+        "n_unavailable_uhg_modules": n_unavailable_uhg_modules,
+        "uhg_capabilities": uhg_capabilities,
         "resolved_adapters": resolved_adapters,
         "findings": findings,
     }

@@ -4,6 +4,7 @@ from eval.manifold_readiness import (
     audit_file_for_patterns,
     build_manifold_readiness_report,
     count_resolved_adapters,
+    probe_uhg_capabilities,
     write_manifold_readiness_report,
 )
 
@@ -52,6 +53,7 @@ def test_build_manifold_readiness_report_counts_blockers_and_warnings(tmp_path):
     assert report["status"] == "needs_refactor"
     assert report["n_blockers"] == 1
     assert report["n_warnings"] == 1
+    assert "uhg_capabilities" in report
 
 
 def test_build_manifold_readiness_report_counts_resolved_adapters(tmp_path):
@@ -90,6 +92,16 @@ def test_count_resolved_adapters_returns_zero_for_missing_file(tmp_path):
     )
 
     assert rows[0]["count"] == 0
+
+
+def test_probe_uhg_capabilities_reports_available_and_unavailable_modules():
+    rows = probe_uhg_capabilities(("json", "not_a_real_module_for_c2s_tests"))
+
+    assert rows[0]["module"] == "json"
+    assert rows[0]["available"] is True
+    assert rows[1]["module"] == "not_a_real_module_for_c2s_tests"
+    assert rows[1]["available"] is False
+    assert rows[1]["error_type"] == "ModuleNotFoundError"
 
 
 def test_write_manifold_readiness_report_writes_json(tmp_path):

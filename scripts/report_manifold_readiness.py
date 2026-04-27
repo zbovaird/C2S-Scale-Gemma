@@ -47,6 +47,7 @@ def main() -> None:
                 "status": report["status"],
                 "n_blockers": report["n_blockers"],
                 "n_warnings": report["n_warnings"],
+                "n_unavailable_uhg_modules": report["n_unavailable_uhg_modules"],
             },
             sort_keys=True,
         ),

@@ -50,6 +50,7 @@ Transform the C2S-Scale-Gemma hybrid architecture into a specialized tool for mo
 - [x] **Real-run review protocol:** Add an ordered protocol manifest for readiness, calibration, preflight, bundle execution, artifact export, QA, and interpretation review.
 - [x] **Manifold-readiness audit:** Add static reporting for Euclidean operations that must be reviewed before the HGNN stack is treated as manifold-native.
 - [x] **Manifold refactor plan:** Convert readiness findings into staged implementation slices for encoder projections, HGNN layers, alignment geometry, and trainer embedding selection.
+- [x] **UHG capability probe:** Report which UHG modules import cleanly so manifold-native layer work is gated by actual available operators instead of assumed APIs.
 - [x] **Alignment backend transparency:** Expose whether alignment loss used projective UHG distance or a Euclidean fallback during geometry-aware runs.
 - [x] **Validation backend reporting:** Carry geometry backend/fallback metadata from embedding comparisons into validation summaries and markdown reports.
 - [x] **Trainer geometry source tracking:** Return alignment graph embeddings separately from fusion graph embeddings and report which graph representation each path consumed.
@@ -71,7 +72,7 @@ Transform the C2S-Scale-Gemma hybrid architecture into a specialized tool for mo
 - [x] **Dataset profile checks:** Compare inspection reports against named validation-track expectations before full bundle execution.
 - [x] **Artifact review report:** Add a content-level review report for exported validation bundles covering interpretation limits, recommendation status, fallback geometry, risk signals, and trajectory geometry coverage.
 - [ ] **Artifact review:** Use the one-command validation artifact export to review benchmark summaries, explorer HTML, shared trajectory projections, and cell-level trajectory deltas for real runs.
-- [ ] **HGNN / manifold layers:** Refactor the hyperbolic encoder path so Euclidean `torch.nn.Linear` (where it sits on the hyperbolic pathway) gives way to **`uhg` hyperbolic linear / manifold-native ops**, with **one** primary manifold (Lorentz vs Poincaré) end-to-end.
+- [x] **HGNN / manifold layers:** Gate the manifold-native layer refactor against runtime UHG capabilities. Current environment imports `uhg.projective.ProjectiveUHG` for distance, while broader `uhg.layers`, `uhg.nn`, and `uhg.manifolds` imports fail; keep explicit tangent-space adapters until importable manifold-native layer ops are available.
 - [x] **Alignment script / losses:** Update contrastive alignment to use the configured **projective-UHG distance** path for geometry-aware runs, with explicit backend/fallback and primary-manifold metadata instead of relying solely on `F.cosine_similarity`.
 - [x] **Data prep (PBMC / screening):** Isolate cells that **share regulatory pathways** with Yamanaka factors to stress-test “root-finding” before full reprogramming series are treated as biological evidence.
 
@@ -98,6 +99,7 @@ Transform the C2S-Scale-Gemma hybrid architecture into a specialized tool for mo
 - [x] Added validation review protocol manifests so real dataset runs have an explicit go/no-go review sequence.
 - [x] Added manifold-readiness audit reports for identifying Euclidean operations on the geometry path before UHG refactoring.
 - [x] Added manifold refactor plan exports so readiness findings become ordered implementation stages with success criteria.
+- [x] Added UHG capability probes to manifold-readiness reports, making native-layer availability an auditable runtime fact.
 - [x] Added alignment loss backend metadata so projective validation runs can report whether UHG distance or fallback distance was used.
 - [x] Propagated geometry backend metadata into validation benchmark rows and markdown so fallback use remains visible in exported artifacts.
 - [x] Added trainer graph-source metadata so validation artifacts can distinguish fusion embeddings from alignment embeddings.
