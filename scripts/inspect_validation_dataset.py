@@ -4,6 +4,10 @@
 from __future__ import annotations
 
 import argparse
+import sys
+from pathlib import Path
+
+sys.path.append(str(Path(__file__).parent.parent / "src"))
 
 from eval.validation_dataset_inspector import (
     build_validation_dataset_inspection,

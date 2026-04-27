@@ -521,6 +521,17 @@ uv run scripts/inspect_validation_dataset.py \
 
 This checks cell/gene counts, available `obs` columns, configured timepoint/cell-type columns, and OSKM gene resolution.
 
+Compare an inspection report against a named validation track:
+
+```bash
+uv run scripts/check_validation_profile.py \
+  --inspection-path artifacts/GSE176206_dataset_inspection.json \
+  --track mouse_transient_partial_oskm \
+  --output-path artifacts/GSE176206_profile_check.json
+```
+
+This produces a compact `pass` / `review` / `fail` report for required columns, expected timepoints, and OSKM gene resolution.
+
 For PBMC or screening-style datasets, `biology.regulatory_screening` provides OSKM-adjacent pathway panels and cell-level ranking helpers for identifying cells with shared regulatory activity before full reprogramming-series validation.
 
 To run the screening helper on a candidate `.h5ad` file:
