@@ -548,6 +548,8 @@ uv run scripts/build_manifold_refactor_plan.py \
   --output-path artifacts/manifold_refactor_plan.json
 ```
 
+The UHG encoder projection path now uses explicit `TangentSpaceLinear` adapters for remaining Euclidean linear maps, making tangent-space boundaries visible before deeper manifold-native layer refactors.
+
 This produces:
 
 - `shift_histogram.png`

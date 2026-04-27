@@ -14,6 +14,7 @@ from uhg.projective import ProjectiveUHG
 from uhg.layers import UHGLayerNorm
 
 from .layers import UHGGraphSAGELayer, UHGGINLayer, UHGAttentionLayer, create_uhg_layer
+from .manifold_ops import TangentSpaceLinear
 
 logger = logging.getLogger(__name__)
 
@@ -67,7 +68,7 @@ class UHGEncoder(nn.Module):
         self.uhg = ProjectiveUHG()
         
         # Input projection
-        self.input_projection = nn.Linear(input_dim, hidden_dim)
+        self.input_projection = TangentSpaceLinear(input_dim, hidden_dim)
         
         # GNN layers
         self.layers = nn.ModuleList()
@@ -82,7 +83,7 @@ class UHGEncoder(nn.Module):
             self.layers.append(layer)
         
         # Output projection
-        self.output_projection = nn.Linear(hidden_dim, output_dim)
+        self.output_projection = TangentSpaceLinear(hidden_dim, output_dim)
         
         # Final UHG normalization
         if use_uhg_norm:
@@ -322,7 +323,7 @@ class UHGMultiScaleEncoder(nn.Module):
             self.encoders.append(encoder)
         
         # Scale fusion
-        self.scale_fusion = nn.Linear(hidden_dim * num_scales, output_dim)
+        self.scale_fusion = TangentSpaceLinear(hidden_dim * num_scales, output_dim)
         
         # Final normalization
         if use_uhg_norm:
