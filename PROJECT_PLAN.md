@@ -42,7 +42,12 @@ Transform the C2S-Scale-Gemma hybrid architecture into a specialized tool for mo
 
 ## Immediate Next Steps (Checklist)
 
-- [ ] **Real validation datasets:** Run the named validation bundle workflow against the selected OKSM time-course datasets and record which profiles/thresholds need adjustment.
+- [ ] **Checkpoint discovery or generation:** Re-check ignored/local paths for usable dual-encoder checkpoints before training: `artifacts/**`, `checkpoints/**`, `outputs/**`, `runs/**`, and root `*.pt` / `*.pth`. Current local search found no `.pt` or `.pth` checkpoints, including the required `artifacts/euclidean/final_model.pt` and `artifacts/projective/final_model.pt`.
+- [ ] **Euclidean baseline checkpoint:** If no equivalent checkpoint is discovered, train a Euclidean baseline dual-encoder checkpoint that saves to `artifacts/euclidean/final_model.pt` with `fusion.alignment_mode = "euclidean_cosine"`.
+- [ ] **Projective / UHG alignment checkpoint:** If no equivalent checkpoint is discovered, train a projective alignment checkpoint that saves to `artifacts/projective/final_model.pt` with `fusion.alignment_mode = "projective_distance"`, `fusion.primary_manifold = "projective_uhg"`, and `fusion.require_geometry_backend` set according to the current UHG runtime check.
+- [ ] **GSE176206 validation bundle:** Run `mouse_adipo_oskm_condition_screen` against the prepared ignored subsets: `data/processed/validation/GSE176206_adipo_screen/GSE176206_adipo_screen_NT.h5ad` as baseline/control and `data/processed/validation/GSE176206_adipo_screen/GSE176206_adipo_screen_SOKM.h5ad` as the full OSKM condition.
+- [ ] **Artifact export, QA, and review:** Export the full validation bundle artifacts, run artifact QA and content review, inspect benchmark summaries, explorer HTML, trajectory projections, and cell-level trajectory geometry before interpretation.
+- [ ] **Next dataset blocker:** After GSE176206 is reviewed, resolve `GSE242423` by finding a valid processed AnnData source or manual conversion path; if it remains blocked, move to the next accessible OSKM dataset in the candidate registry, prioritizing `GSE106664` / Broad SCP30.
 - [x] **Dataset readiness manifest:** Add a readiness report that connects validation tracks, dataset profiles, local data hints, and missing artifacts before expensive validation runs.
 - [x] **Threshold calibration audit:** Add checks for heuristic window profiles and recommendation thresholds before treating validation outputs as calibrated.
 - [x] **Validation preflight / artifact QA:** Add preflight checks for validation inputs and QA checks for exported artifact bundles before treating a run as review-ready.
@@ -71,10 +76,77 @@ Transform the C2S-Scale-Gemma hybrid architecture into a specialized tool for mo
 - [x] **Dataset inspection:** Add a downloaded-AnnData inspection report for obs columns, timepoints, cell types, and OSKM gene resolution before expensive validation.
 - [x] **Dataset profile checks:** Compare inspection reports against named validation-track expectations before full bundle execution.
 - [x] **Artifact review report:** Add a content-level review report for exported validation bundles covering interpretation limits, recommendation status, fallback geometry, risk signals, and trajectory geometry coverage.
-- [ ] **Artifact review:** Use the one-command validation artifact export to review benchmark summaries, explorer HTML, shared trajectory projections, and cell-level trajectory deltas for real runs.
 - [x] **HGNN / manifold layers:** Gate the manifold-native layer refactor against runtime UHG capabilities. Current environment imports `uhg.projective.ProjectiveUHG` for distance, while broader `uhg.layers`, `uhg.nn`, and `uhg.manifolds` imports fail; keep explicit tangent-space adapters until importable manifold-native layer ops are available.
 - [x] **Alignment script / losses:** Update contrastive alignment to use the configured **projective-UHG distance** path for geometry-aware runs, with explicit backend/fallback and primary-manifold metadata instead of relying solely on `F.cosine_similarity`.
 - [x] **Data prep (PBMC / screening):** Isolate cells that **share regulatory pathways** with Yamanaka factors to stress-test “root-finding” before full reprogramming series are treated as biological evidence.
+
+## Immediate Blocker Plan: Missing Checkpoints
+
+The validation bundle is blocked on paired dual-encoder checkpoints. The current expected paths are:
+
+- `artifacts/euclidean/final_model.pt`
+- `artifacts/projective/final_model.pt`
+
+Local checkpoint discovery found no `.pt` or `.pth` files in the requested ignored/local locations. If future discovery finds equivalent checkpoints under different paths, do not commit or move binaries through Git. Instead, verify each checkpoint has a `trainer_state_dict` and compatible `config`, then either pass the discovered path directly to validation or copy/symlink it locally into the expected ignored path:
+
+```bash
+mkdir -p artifacts/euclidean artifacts/projective
+cp /path/to/euclidean/final_model.pt artifacts/euclidean/final_model.pt
+cp /path/to/projective/final_model.pt artifacts/projective/final_model.pt
+```
+
+If checkpoints remain missing, train them in a controlled environment rather than launching heavy jobs opportunistically:
+
+1. **Prerequisites:** Confirm `torch`, `transformers`, `bitsandbytes` or the selected quantization backend, `scanpy` / `anndata`, `mlflow`, and `uhg` are importable. Use a CUDA GPU for the 7B model path; expect CPU-only runs to be impractical. Confirm the Hugging Face model referenced by the training config is accessible and that `logs/` plus the ignored output directories can be created.
+2. **Training config readiness:** Add or verify two script-schema-compatible configs before training, e.g. `configs/validation_train_euclidean.toml` and `configs/validation_train_projective.toml`. The current `scripts/align_dual_encoder.py` expects keys such as `model.text.model_name`, `model.text.max_length`, `model.text.hidden_size`, `model.text.quantization`, `model.text.lora`, `model.hgnn.input_dim`, `model.hgnn.hidden_dim`, `model.hgnn.output_dim`, `model.hgnn.num_layers`, `model.hgnn.dropout`, `model.hgnn.curvature`, `model.fusion.dim`, `model.fusion.dropout`, `data.train_path`, `data.val_path`, `data.test_path`, `data.top_genes`, optional `data.oskm`, and `training.batch_size`, `training.num_workers`, `training.learning_rate`, `training.weight_decay`, `training.min_lr`, `training.grad_clip_norm`, `training.contrastive_temperature`, `training.hard_negative_weight`, `training.num_epochs`, `training.save_interval`, and `training.log_interval`. Align the config schema before training because `configs/colab_7b.toml` is useful as intent but does not currently match every key expected by the trainer.
+3. **Euclidean baseline command:**
+
+```bash
+mkdir -p artifacts/euclidean logs
+uv run scripts/align_dual_encoder.py \
+  --config configs/validation_train_euclidean.toml \
+  --output_dir artifacts/euclidean \
+  --log_level INFO
+```
+
+4. **Projective / UHG command:**
+
+```bash
+mkdir -p artifacts/projective logs
+uv run scripts/align_dual_encoder.py \
+  --config configs/validation_train_projective.toml \
+  --output_dir artifacts/projective \
+  --log_level INFO
+```
+
+5. **Expected outputs:** Each run should write `best_checkpoint_epoch_*.pt`, periodic `checkpoint_epoch_*.pt`, `mlruns/`, and a final checkpoint at `artifacts/<mode>/final_model.pt`. The final checkpoint must contain `trainer_state_dict`, `config`, and `test_metrics`, because validation loading reads those fields.
+6. **Smoke checks before full validation:** Run a Python checkpoint-load check with `torch.load(..., map_location="cpu")` to confirm expected keys, then run `scripts/run_validation_bundle.py --preflight-only` against the prepared `GSE176206` NT/SOKM subsets. For the projective config, verify validation metadata reports `alignment_mode = "projective_distance"`, `primary_manifold = "projective_uhg"`, and either a real `projective_uhg_distance` backend or an explicitly accepted fallback.
+7. **GSE176206 validation command after checkpoints exist:**
+
+```bash
+uv run scripts/run_validation_bundle.py \
+  --track mouse_adipo_oskm_condition_screen \
+  --baseline-data-path data/processed/validation/GSE176206_adipo_screen/GSE176206_adipo_screen_NT.h5ad \
+  --perturbed-data-path data/processed/validation/GSE176206_adipo_screen/GSE176206_adipo_screen_SOKM.h5ad \
+  --euclidean-config configs/validation_train_euclidean.toml \
+  --euclidean-checkpoint artifacts/euclidean/final_model.pt \
+  --projective-config configs/validation_train_projective.toml \
+  --projective-checkpoint artifacts/projective/final_model.pt \
+  --output-root artifacts/validation_bundle
+```
+
+8. **Artifact export and review commands:**
+
+```bash
+uv run scripts/export_validation_bundle_artifacts.py \
+  --validation-manifest artifacts/validation_bundle/mouse_adipo_oskm_condition_screen/validation_bundle.json
+
+uv run scripts/qa_validation_artifacts.py \
+  --artifact-manifest artifacts/validation_bundle/mouse_adipo_oskm_condition_screen/validation_artifacts_manifest.json
+
+uv run scripts/review_validation_artifacts.py \
+  --artifact-manifest artifacts/validation_bundle/mouse_adipo_oskm_condition_screen/validation_artifacts_manifest.json
+```
 
 ## Progress So Far
 
@@ -159,18 +231,20 @@ Once the core tooling is built out, proceed through these stages before making s
 
 Names in earlier sketches (e.g. `src/hgnn/hgnn_encoder.py`) differ from this tree. Use these as the **current** integration points when implementing the phases above:
 
-| Concept in plan | Likely files in this repo |
-|-----------------|----------------------------|
-| HGNN + UHG encoder | [`src/hgnn/uhg_hgnn_encoder.py`](src/hgnn/uhg_hgnn_encoder.py), [`src/hgnn/encoder.py`](src/hgnn/encoder.py), [`src/hgnn/layers.py`](src/hgnn/layers.py) |
-| Dual-encoder alignment training | [`scripts/align_dual_encoder.py`](scripts/align_dual_encoder.py), [`src/fusion/trainer.py`](src/fusion/trainer.py) |
-| Contrastive / alignment losses | [`src/fusion/align_losses.py`](src/fusion/align_losses.py) |
-| Graph build entrypoint | [`scripts/build_graphs.py`](scripts/build_graphs.py); building blocks under [`src/graphs/`](src/graphs/) (e.g. [`build_knn.py`](src/graphs/build_knn.py), [`build_grn.py`](src/graphs/build_grn.py)) |
-| Cell2Sentence / data | [`src/data/dataset.py`](src/data/dataset.py), [`src/data/collate.py`](src/data/collate.py) |
-| UHG adapters / projection | [`src/uhg_adapters/`](src/uhg_adapters/), [`docs/uhg_api.md`](docs/uhg_api.md) |
-| Validation tracks / bundle summaries | [`configs/validation_tracks.toml`](configs/validation_tracks.toml), [`src/eval/validation_tracks.py`](src/eval/validation_tracks.py), [`src/eval/validation_summary.py`](src/eval/validation_summary.py) |
-| Validation artifact exports | [`scripts/export_validation_bundle_artifacts.py`](scripts/export_validation_bundle_artifacts.py), [`src/eval/validation_bundle_exports.py`](src/eval/validation_bundle_exports.py) |
-| Trajectory datasets / projections | [`src/eval/validation_trajectory_dataset.py`](src/eval/validation_trajectory_dataset.py), [`src/eval/validation_trajectory_projection.py`](src/eval/validation_trajectory_projection.py), [`src/eval/validation_projection_visuals.py`](src/eval/validation_projection_visuals.py) |
-| Validation explorer HTML | [`src/eval/validation_explorer.py`](src/eval/validation_explorer.py), [`src/eval/validation_explorer_html.py`](src/eval/validation_explorer_html.py), [`src/eval/validation_trajectory_projection_html.py`](src/eval/validation_trajectory_projection_html.py) |
+
+| Concept in plan                      | Likely files in this repo                                                                                                                                                                                                                                                          |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| HGNN + UHG encoder                   | [`src/hgnn/uhg_hgnn_encoder.py`](src/hgnn/uhg_hgnn_encoder.py), [`src/hgnn/encoder.py`](src/hgnn/encoder.py), [`src/hgnn/layers.py`](src/hgnn/layers.py)                                                                                                                           |
+| Dual-encoder alignment training      | [`scripts/align_dual_encoder.py`](scripts/align_dual_encoder.py), [`src/fusion/trainer.py`](src/fusion/trainer.py)                                                                                                                                                                 |
+| Contrastive / alignment losses       | [`src/fusion/align_losses.py`](src/fusion/align_losses.py)                                                                                                                                                                                                                         |
+| Graph build entrypoint               | [`scripts/build_graphs.py`](scripts/build_graphs.py); building blocks under [`src/graphs/`](src/graphs/) (e.g. [`build_knn.py`](src/graphs/build_knn.py), [`build_grn.py`](src/graphs/build_grn.py))                                                                               |
+| Cell2Sentence / data                 | [`src/data/dataset.py`](src/data/dataset.py), [`src/data/collate.py`](src/data/collate.py)                                                                                                                                                                                         |
+| UHG adapters / projection            | [`src/uhg_adapters/`](src/uhg_adapters/), [`docs/uhg_api.md`](docs/uhg_api.md)                                                                                                                                                                                                     |
+| Validation tracks / bundle summaries | [`configs/validation_tracks.toml`](configs/validation_tracks.toml), [`src/eval/validation_tracks.py`](src/eval/validation_tracks.py), [`src/eval/validation_summary.py`](src/eval/validation_summary.py)                                                                           |
+| Validation artifact exports          | [`scripts/export_validation_bundle_artifacts.py`](scripts/export_validation_bundle_artifacts.py), [`src/eval/validation_bundle_exports.py`](src/eval/validation_bundle_exports.py)                                                                                                 |
+| Trajectory datasets / projections    | [`src/eval/validation_trajectory_dataset.py`](src/eval/validation_trajectory_dataset.py), [`src/eval/validation_trajectory_projection.py`](src/eval/validation_trajectory_projection.py), [`src/eval/validation_projection_visuals.py`](src/eval/validation_projection_visuals.py) |
+| Validation explorer HTML             | [`src/eval/validation_explorer.py`](src/eval/validation_explorer.py), [`src/eval/validation_explorer_html.py`](src/eval/validation_explorer_html.py), [`src/eval/validation_trajectory_projection_html.py`](src/eval/validation_trajectory_projection_html.py)                     |
+
 
 During review, adjust this table if files move or split.
 
