@@ -120,6 +120,7 @@ Transform the C2S-Scale-Gemma hybrid architecture into a specialized tool for mo
 - [x] Added validation dataset inspection reports for checking downloaded `.h5ad` schema and OSKM presence before validation runs.
 - [x] Added validation profile checks that compare inspection reports with configured track columns, expected timepoints, and OSKM resolution.
 - [x] Adapted the staged `GSE176206_adipo_screen.h5ad.gz` profile to the real `combination_short` condition-screen schema: `NT` is the control condition, `SOKM` is the full OSKM condition, and `age` / `experiment` provide cohort and batch metadata. This dataset should not be treated as a time-course trajectory.
+- [x] Prepared ignored derived validation inputs for `GSE176206`: `NT` control and `SOKM` full-OSKM `.h5ad` subsets under `data/processed/validation/GSE176206_adipo_screen/`, with subset inspections confirming condition, age, batch, and mouse OSKM gene resolution.
 - [x] Added validation artifact review reports that turn exported bundle contents into pass/review/fail signals before scientific interpretation.
 
 ## Updated Remaining Build
@@ -130,7 +131,7 @@ Transform the C2S-Scale-Gemma hybrid architecture into a specialized tool for mo
 4. Tighten documentation around config profiles, benchmark datasets, artifact interpretation limits, and what should/should not be inferred from projection views.
 5. Gate the HGNN manifold-native refactor against runtime UHG capability checks. The current software path centralizes `projective_uhg`, records backend/fallback metadata, and keeps explicit tangent-space adapters until importable UHG-native layer ops can be verified under a working PyTorch runtime.
 6. Resolve the `GSE242423` acquisition blocker by finding a valid processed AnnData source or adding a manual conversion path; the inferred `.h5ad` GEO supplementary URL currently returns 404.
-7. Re-run full model validation only in an environment where `torch`, `scanpy` / `anndata`, and the required checkpoints load reliably.
+7. Re-run full model validation only in an environment where `torch`, `scanpy` / `anndata`, and the required Euclidean/projective checkpoints load reliably; the local `GSE176206` derived inputs are ready, but `artifacts/euclidean/final_model.pt` and `artifacts/projective/final_model.pt` are currently missing.
 
 ## Real Dataset Candidates
 
