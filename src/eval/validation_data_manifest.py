@@ -119,10 +119,14 @@ def build_validation_data_manifest(
                     for value in (
                         track_config.get("cell_type_column") or profile.get("cell_type_column"),
                         track_config.get("timepoint_column") or profile.get("timepoint_column"),
+                        track_config.get("condition_column") or profile.get("condition_column"),
+                        track_config.get("age_column") or profile.get("age_column"),
+                        track_config.get("batch_column") or profile.get("batch_column"),
                     )
                     if value
                 ],
                 "expected_timepoints": list(track_config.get("expected_timepoints", [])),
+                "expected_conditions": list(track_config.get("expected_conditions", [])),
                 "notes": profile.get("notes"),
             }
         )

@@ -22,6 +22,9 @@ class FakeAnnData:
             {
                 "cell_type": ["fibroblast", "fibroblast", "iPSC"],
                 "timepoint": ["D0", "D2", "iPSC"],
+                "combination_short": ["NT", "SOKM", "NT"],
+                "age": ["young", "old", "old"],
+                "experiment": ["exp1", "exp1", "exp2"],
             }
         )
         self.var_names = ["POU5F1", "SOX2", "KLF4", "ACTB"]
@@ -56,6 +59,35 @@ def test_build_validation_dataset_inspection_reports_metadata_and_oskm():
         "KLF4": "KLF4",
     }
     assert report["missing_oskm_genes"] == ["MYC"]
+    assert report["ready_for_profile_review"] is True
+
+
+def test_build_validation_dataset_inspection_reports_condition_screen_columns():
+    adata = FakeAnnData()
+    adata.var_names = ["Pou5f1", "Sox2", "Klf4", "Myc", "Actb"]
+
+    report = build_validation_dataset_inspection(
+        adata,
+        dataset_name="gse176206_adipo_screen",
+        species="mouse",
+        condition_column="combination_short",
+        age_column="age",
+        batch_column="experiment",
+    )
+
+    assert report["cell_type_column_present"] is False
+    assert report["timepoint_column_present"] is False
+    assert report["condition_column_present"] is True
+    assert report["condition_summary"]["values"] == ["NT", "SOKM"]
+    assert report["age_summary"]["values"] == ["old", "young"]
+    assert report["batch_summary"]["values"] == ["exp1", "exp2"]
+    assert report["resolved_oskm_genes"] == {
+        "Pou5f1": "Pou5f1",
+        "Sox2": "Sox2",
+        "Klf4": "Klf4",
+        "Myc": "Myc",
+    }
+    assert report["missing_oskm_genes"] == []
     assert report["ready_for_profile_review"] is True
 
 

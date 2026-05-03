@@ -74,6 +74,44 @@ def test_build_validation_dataset_readiness_reports_ready_when_data_exists(tmp_p
     assert row["perturbed_data_exists"] is True
 
 
+def test_build_validation_dataset_readiness_accepts_condition_screen_metadata(tmp_path):
+    baseline_path = tmp_path / "baseline.h5ad"
+    perturbed_path = tmp_path / "perturbed.h5ad"
+    baseline_path.write_text("placeholder", encoding="utf-8")
+    perturbed_path.write_text("placeholder", encoding="utf-8")
+
+    row = build_validation_dataset_readiness(
+        track_name="mouse_adipo_oskm_condition_screen",
+        track_config={
+            "dataset_profile": "gse176206_mouse_adipo_condition_screen",
+            "baseline_data_hint": str(baseline_path),
+            "perturbed_data_hint": str(perturbed_path),
+            "condition_column": "combination_short",
+            "expected_conditions": ["NT", "SOKM"],
+            "age_column": "age",
+            "batch_column": "experiment",
+            "primary_metrics": ["safe_fraction"],
+        },
+        profile_registry={
+            "reprogramming_profiles": {
+                "gse176206_mouse_adipo_condition_screen": {
+                    "accession": "GSE176206",
+                    "species": "mouse",
+                    "source_url": "https://example.test",
+                    "baseline_data_hint": str(baseline_path),
+                    "condition_column": "combination_short",
+                }
+            }
+        },
+    )
+
+    assert row["status"] == "ready"
+    assert row["track_missing_fields"] == []
+    assert row["profile_missing_fields"] == []
+    assert row["condition_column"] == "combination_short"
+    assert row["expected_conditions"] == ["NT", "SOKM"]
+
+
 def test_build_validation_readiness_report_counts_statuses():
     report = build_validation_readiness_report(
         track_registry={

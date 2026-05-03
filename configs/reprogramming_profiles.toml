@@ -36,23 +36,26 @@ min_somatic_escape = 0.0
 rejuvenation = ["SIRT1", "FOXO3", "PPARGC1A", "TFAM", "NFE2L2"]
 pluripotency_risk = ["NANOG", "LIN28A", "DPPA4", "UTF1", "PRDM14"]
 
-[reprogramming_profiles.gse176206_mouse_transient_partial]
-title = "Mouse transient partial reprogramming in adipogenic cells and MSCs"
+[reprogramming_profiles.gse176206_mouse_adipo_condition_screen]
+title = "Mouse adipogenic OSKM factor-combination screen"
 accession = "GSE176206"
 species = "mouse"
 modality = "scRNA-seq"
 source_url = "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE176206"
 baseline_data_hint = "data/raw/GSE176206_adipo_screen.h5ad.gz"
-cell_type_column = "cell_type"
-timepoint_column = "phase"
-timepoint_order = ["baseline", "day3_induction", "day6_chase"]
-notes = "Transient OSKM induction with 3-day induction and 3-day chase; includes young and aged adipogenic cells and MSCs."
+condition_column = "combination_short"
+condition_order = ["NT", "SOKM"]
+control_condition = "NT"
+full_oskm_condition = "SOKM"
+age_column = "age"
+batch_column = "experiment"
+notes = "GSE176206 adipo screen is configured as a factor-combination condition screen, not a true time course; NT is the control condition and SOKM is the full OSKM combination."
 
-[reprogramming_profiles.gse176206_mouse_transient_partial.references]
+[reprogramming_profiles.gse176206_mouse_adipo_condition_screen.references]
 somatic_labels = ["adipogenic", "msc", "somatic", "starting_state"]
 pluripotent_labels = ["pluripotent_like", "ipsc_like", "esc_like"]
 
-[reprogramming_profiles.gse176206_mouse_transient_partial.window_profile]
+[reprogramming_profiles.gse176206_mouse_adipo_condition_screen.window_profile]
 partial_window_proximity_min = 0.25
 partial_window_proximity_max = 0.65
 partial_window_max_risk = 0.52
@@ -66,6 +69,6 @@ risk_min_pluripotency_marker = 0.55
 min_progress_delta = 0.0
 min_somatic_escape = 0.0
 
-[reprogramming_profiles.gse176206_mouse_transient_partial.marker_panels]
+[reprogramming_profiles.gse176206_mouse_adipo_condition_screen.marker_panels]
 rejuvenation = ["Sirt1", "Foxo3", "Ppargc1a", "Tfam", "Nfe2l2"]
 pluripotency_risk = ["Nanog", "Lin28a", "Dppa4", "Utf1", "Prdm14"]

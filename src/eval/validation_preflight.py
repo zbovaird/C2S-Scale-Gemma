@@ -9,9 +9,6 @@ from typing import Any, Dict, Mapping
 
 REQUIRED_TRACK_FIELDS = (
     "dataset_profile",
-    "cell_type_column",
-    "timepoint_column",
-    "expected_timepoints",
     "primary_metrics",
 )
 
@@ -56,6 +53,48 @@ def summarize_preflight_checks(checks: list[dict]) -> dict:
     }
 
 
+def _build_track_field_checks(track_name: str, track_config: Mapping[str, Any]) -> list[dict]:
+    checks = []
+    for field in REQUIRED_TRACK_FIELDS:
+        checks.append(
+            {
+                "id": f"track_field:{field}",
+                "description": f"Validation track '{track_name}' defines {field}.",
+                "passed": bool(track_config.get(field)),
+                "value": track_config.get(field),
+            }
+        )
+
+    is_condition_track = bool(track_config.get("condition_column"))
+    axis_fields = (
+        ("condition_column", "expected_conditions")
+        if is_condition_track
+        else ("timepoint_column", "expected_timepoints")
+    )
+    if not is_condition_track:
+        checks.append(
+            {
+                "id": "track_field:cell_type_column",
+                "description": (
+                    f"Validation track '{track_name}' defines cell_type_column for "
+                    "time-course profile checks."
+                ),
+                "passed": bool(track_config.get("cell_type_column")),
+                "value": track_config.get("cell_type_column"),
+            }
+        )
+    for field in axis_fields:
+        checks.append(
+            {
+                "id": f"track_field:{field}",
+                "description": f"Validation track '{track_name}' defines {field}.",
+                "passed": bool(track_config.get(field)),
+                "value": track_config.get(field),
+            }
+        )
+    return checks
+
+
 def build_validation_input_preflight(
     *,
     track_name: str,
@@ -69,16 +108,7 @@ def build_validation_input_preflight(
     dataset_profile_config: str | Path,
 ) -> dict:
     """Build a preflight report for inputs needed to run a validation bundle."""
-    checks = []
-    for field in REQUIRED_TRACK_FIELDS:
-        checks.append(
-            {
-                "id": f"track_field:{field}",
-                "description": f"Validation track '{track_name}' defines {field}.",
-                "passed": bool(track_config.get(field)),
-                "value": track_config.get(field),
-            }
-        )
+    checks = _build_track_field_checks(track_name, track_config)
     checks.extend(
         [
             _check_path_exists(

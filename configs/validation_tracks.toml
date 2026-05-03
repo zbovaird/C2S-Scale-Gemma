@@ -24,27 +24,30 @@ max_risk_fraction_increase = 0.03
 max_mean_l2_shift_increase = 0.10
 min_timepoint_safe_gains = 2
 
-[validation_tracks.mouse_transient_partial_oskm]
-title = "Mouse transient partial reprogramming validation"
-dataset_profile = "gse176206_mouse_transient_partial"
+[validation_tracks.mouse_adipo_oskm_condition_screen]
+title = "Mouse adipogenic OSKM condition-screen validation"
+dataset_profile = "gse176206_mouse_adipo_condition_screen"
 accession = "GSE176206"
 species = "mouse"
 source_url = "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE176206"
 baseline_data_hint = "data/raw/GSE176206_adipo_screen.h5ad.gz"
-perturbed_data_hint = "artifacts/GSE176206_transient_oskm_perturbed.h5ad"
-cell_type_column = "cell_type"
-timepoint_column = "phase"
-expected_timepoints = ["baseline", "day3_induction", "day6_chase"]
+perturbed_data_hint = "artifacts/GSE176206_adipo_screen_sokm_perturbed.h5ad"
+condition_column = "combination_short"
+expected_conditions = ["NT", "SOKM"]
+control_condition = "NT"
+full_oskm_condition = "SOKM"
+age_column = "age"
+batch_column = "experiment"
 primary_metrics = ["mean_l2_shift", "productive_fraction", "safe_fraction", "risk_fraction"]
-report_focus = "Assess whether projective alignment improves safe rejuvenation signals without inflating pluripotency-risk cohorts."
+report_focus = "Compare NT control cells with the full SOKM condition across age cohorts in the GSE176206 adipogenic factor-combination screen; do not interpret this track as a time-course trajectory."
 recommended_alignment = "projective_distance"
 
-[validation_tracks.mouse_transient_partial_oskm.recommendation]
+[validation_tracks.mouse_adipo_oskm_condition_screen.recommendation]
 min_safe_fraction_gain = 0.04
 min_productive_fraction_gain = 0.03
 max_risk_fraction_increase = 0.02
 max_mean_l2_shift_increase = 0.08
-min_timepoint_safe_gains = 1
+min_condition_safe_gains = 1
 
 [validation_dataset_candidates.waddington_ot_mef_to_ipsc]
 title = "Waddington-OT MEF to iPSC"

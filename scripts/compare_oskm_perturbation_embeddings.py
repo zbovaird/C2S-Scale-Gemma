@@ -128,7 +128,13 @@ def create_dataset(
     marker_panels = reprogramming_config.get("marker_panels", {})
     metadata_columns = []
     if dataset_manifest:
-        for key in ("timepoint_column", "batch_column", "donor_column", "age_column"):
+        for key in (
+            "timepoint_column",
+            "condition_column",
+            "batch_column",
+            "donor_column",
+            "age_column",
+        ):
             value = dataset_manifest.get(key)
             if value:
                 metadata_columns.append(str(value))
@@ -344,7 +350,13 @@ def run_embedding_comparison(
         ),
     }
     if dataset_manifest is not None:
-        for key in ("timepoint_column", "batch_column", "donor_column", "age_column"):
+        for key in (
+            "timepoint_column",
+            "condition_column",
+            "batch_column",
+            "donor_column",
+            "age_column",
+        ):
             column_name = dataset_manifest.get(key)
             if column_name:
                 metadata[str(column_name)] = _get_column_values(

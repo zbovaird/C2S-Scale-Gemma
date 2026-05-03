@@ -10,28 +10,39 @@ from eval.reprogramming_profiles import load_profile_registry
 from eval.validation_tracks import load_validation_track_registry
 
 
-REQUIRED_PROFILE_FIELDS = (
+COMMON_REQUIRED_PROFILE_FIELDS = (
     "accession",
     "species",
     "source_url",
     "baseline_data_hint",
-    "cell_type_column",
-    "timepoint_column",
 )
 
-REQUIRED_TRACK_FIELDS = (
+COMMON_REQUIRED_TRACK_FIELDS = (
     "dataset_profile",
     "baseline_data_hint",
     "perturbed_data_hint",
-    "cell_type_column",
-    "timepoint_column",
-    "expected_timepoints",
     "primary_metrics",
 )
 
 
 def _missing_fields(payload: Mapping[str, Any], fields: tuple[str, ...]) -> list[str]:
     return [field for field in fields if not payload.get(field)]
+
+
+def _required_profile_fields(profile: Mapping[str, Any] | None) -> tuple[str, ...]:
+    if profile and profile.get("condition_column"):
+        return COMMON_REQUIRED_PROFILE_FIELDS + ("condition_column",)
+    return COMMON_REQUIRED_PROFILE_FIELDS + ("cell_type_column", "timepoint_column")
+
+
+def _required_track_fields(track_config: Mapping[str, Any]) -> tuple[str, ...]:
+    if track_config.get("condition_column"):
+        return COMMON_REQUIRED_TRACK_FIELDS + ("condition_column", "expected_conditions")
+    return COMMON_REQUIRED_TRACK_FIELDS + (
+        "cell_type_column",
+        "timepoint_column",
+        "expected_timepoints",
+    )
 
 
 def build_validation_dataset_readiness(
@@ -43,9 +54,11 @@ def build_validation_dataset_readiness(
     """Build one readiness row for a named validation track."""
     profile_name = str(track_config.get("dataset_profile", ""))
     profile = profile_registry.get("reprogramming_profiles", {}).get(profile_name)
-    track_missing = _missing_fields(track_config, REQUIRED_TRACK_FIELDS)
+    track_missing = _missing_fields(track_config, _required_track_fields(track_config))
     profile_missing = (
-        _missing_fields(profile, REQUIRED_PROFILE_FIELDS) if profile is not None else list(REQUIRED_PROFILE_FIELDS)
+        _missing_fields(profile, _required_profile_fields(profile))
+        if profile is not None
+        else list(_required_profile_fields(None))
     )
     baseline_hint = track_config.get("baseline_data_hint") or (
         profile or {}
@@ -79,7 +92,11 @@ def build_validation_dataset_readiness(
         "perturbed_data_exists": perturbed_exists,
         "cell_type_column": track_config.get("cell_type_column") or (profile or {}).get("cell_type_column"),
         "timepoint_column": track_config.get("timepoint_column") or (profile or {}).get("timepoint_column"),
+        "condition_column": track_config.get("condition_column") or (profile or {}).get("condition_column"),
+        "age_column": track_config.get("age_column") or (profile or {}).get("age_column"),
+        "batch_column": track_config.get("batch_column") or (profile or {}).get("batch_column"),
         "expected_timepoints": list(track_config.get("expected_timepoints", [])),
+        "expected_conditions": list(track_config.get("expected_conditions", [])),
         "primary_metrics": list(track_config.get("primary_metrics", [])),
         "report_focus": track_config.get("report_focus"),
     }

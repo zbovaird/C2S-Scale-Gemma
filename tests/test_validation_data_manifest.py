@@ -139,6 +139,42 @@ def test_build_validation_data_manifest_includes_candidate_registry():
     )
 
 
+def test_build_validation_data_manifest_includes_condition_axes():
+    manifest = build_validation_data_manifest(
+        track_registry={
+            "validation_tracks": {
+                "mouse_adipo_oskm_condition_screen": {
+                    "title": "Mouse adipogenic OSKM condition screen",
+                    "dataset_profile": "gse176206_mouse_adipo_condition_screen",
+                    "baseline_data_hint": "data/raw/GSE176206_adipo_screen.h5ad.gz",
+                    "perturbed_data_hint": "artifacts/GSE176206_adipo_screen_sokm_perturbed.h5ad",
+                    "condition_column": "combination_short",
+                    "expected_conditions": ["NT", "SOKM"],
+                    "age_column": "age",
+                    "batch_column": "experiment",
+                    "primary_metrics": ["safe_fraction"],
+                }
+            }
+        },
+        profile_registry={
+            "reprogramming_profiles": {
+                "gse176206_mouse_adipo_condition_screen": {
+                    "accession": "GSE176206",
+                    "species": "mouse",
+                    "source_url": "https://example.test/GSE176206",
+                    "baseline_data_hint": "data/raw/GSE176206_adipo_screen.h5ad.gz",
+                    "condition_column": "combination_short",
+                }
+            }
+        },
+    )
+
+    row = manifest["datasets"][0]
+    assert row["required_obs_columns"] == ["combination_short", "age", "experiment"]
+    assert row["expected_timepoints"] == []
+    assert row["expected_conditions"] == ["NT", "SOKM"]
+
+
 def test_infer_geo_supplement_url_builds_expected_bucket_url():
     url = infer_geo_supplement_url("GSE176206", "GSE176206_adipo_screen.h5ad.gz")
 

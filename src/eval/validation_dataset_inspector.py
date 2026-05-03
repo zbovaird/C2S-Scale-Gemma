@@ -7,7 +7,7 @@ from collections import Counter
 from pathlib import Path
 from typing import Any, Iterable, Mapping
 
-from biology.oskm import resolve_oskm_genes
+from biology.oskm import get_oskm_gene_aliases, resolve_oskm_genes
 
 
 def _to_list(values: Iterable[Any]) -> list[Any]:
@@ -48,13 +48,24 @@ def build_validation_dataset_inspection(
     species: str,
     cell_type_column: str | None = None,
     timepoint_column: str | None = None,
+    condition_column: str | None = None,
+    age_column: str | None = None,
+    batch_column: str | None = None,
 ) -> dict:
     """Build a lightweight inspection report for an AnnData-like object."""
     obs_columns = _obs_columns(adata)
     var_names = [str(name) for name in _to_list(getattr(adata, "var_names"))]
     cell_type_values = _column_values(adata, cell_type_column)
     timepoint_values = _column_values(adata, timepoint_column)
+    condition_values = _column_values(adata, condition_column)
+    age_values = _column_values(adata, age_column)
+    batch_values = _column_values(adata, batch_column)
     resolved_oskm = resolve_oskm_genes(var_names, species=species)
+    expected_oskm_genes = list(get_oskm_gene_aliases(species))
+    configured_axis_present = bool(
+        (timepoint_column and timepoint_column in obs_columns)
+        or (condition_column and condition_column in obs_columns)
+    )
 
     return {
         "artifact_type": "validation_dataset_inspection",
@@ -66,11 +77,23 @@ def build_validation_dataset_inspection(
         "var_name_sample": var_names[:20],
         "cell_type_column": cell_type_column,
         "timepoint_column": timepoint_column,
+        "condition_column": condition_column,
+        "age_column": age_column,
+        "batch_column": batch_column,
         "cell_type_column_present": bool(cell_type_column in obs_columns)
         if cell_type_column
         else False,
         "timepoint_column_present": bool(timepoint_column in obs_columns)
         if timepoint_column
+        else False,
+        "condition_column_present": bool(condition_column in obs_columns)
+        if condition_column
+        else False,
+        "age_column_present": bool(age_column in obs_columns)
+        if age_column
+        else False,
+        "batch_column_present": bool(batch_column in obs_columns)
+        if batch_column
         else False,
         "cell_type_summary": summarize_column_values(cell_type_values)
         if cell_type_values
@@ -78,19 +101,18 @@ def build_validation_dataset_inspection(
         "timepoint_summary": summarize_column_values(timepoint_values)
         if timepoint_values
         else None,
+        "condition_summary": summarize_column_values(condition_values)
+        if condition_values
+        else None,
+        "age_summary": summarize_column_values(age_values) if age_values else None,
+        "batch_summary": summarize_column_values(batch_values) if batch_values else None,
         "resolved_oskm_genes": resolved_oskm,
         "missing_oskm_genes": [
             canonical
-            for canonical in ("POU5F1", "SOX2", "KLF4", "MYC")
-            if canonical not in {gene.upper(): gene for gene in resolved_oskm}
+            for canonical in expected_oskm_genes
+            if canonical not in resolved_oskm
         ],
-        "ready_for_profile_review": bool(
-            cell_type_column
-            and timepoint_column
-            and cell_type_column in obs_columns
-            and timepoint_column in obs_columns
-            and resolved_oskm
-        ),
+        "ready_for_profile_review": bool(configured_axis_present and resolved_oskm),
     }
 
 

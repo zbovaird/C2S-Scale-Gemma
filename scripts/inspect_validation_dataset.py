@@ -23,6 +23,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--species", default="human", help="OSKM alias species.")
     parser.add_argument("--cell-type-column", default=None)
     parser.add_argument("--timepoint-column", default=None)
+    parser.add_argument("--condition-column", default=None)
+    parser.add_argument("--age-column", default=None)
+    parser.add_argument("--batch-column", default=None)
     return parser.parse_args()
 
 
@@ -30,19 +33,26 @@ def main() -> None:
     args = parse_args()
     try:
         import scanpy as sc
-    except ImportError as exc:  # pragma: no cover - environment dependent
-        raise SystemExit(
-            "scanpy is required to inspect .h5ad files. Install the project with "
-            "single-cell dependencies before running this command."
-        ) from exc
+        adata = sc.read_h5ad(args.input)
+    except ImportError:
+        try:
+            import anndata as ad
+        except ImportError as exc:  # pragma: no cover - environment dependent
+            raise SystemExit(
+                "scanpy or anndata is required to inspect .h5ad files. Install the "
+                "project with single-cell dependencies before running this command."
+            ) from exc
+        adata = ad.read_h5ad(args.input)
 
-    adata = sc.read_h5ad(args.input)
     report = build_validation_dataset_inspection(
         adata,
         dataset_name=args.dataset_name,
         species=args.species,
         cell_type_column=args.cell_type_column,
         timepoint_column=args.timepoint_column,
+        condition_column=args.condition_column,
+        age_column=args.age_column,
+        batch_column=args.batch_column,
     )
     write_validation_dataset_inspection(report, args.output)
 

@@ -75,6 +75,56 @@ def test_build_validation_profile_check_flags_missing_timepoints_for_review():
     assert report["missing_timepoints"] == ["iPSC"]
 
 
+def test_build_validation_profile_check_passes_condition_screen_without_timepoints():
+    inspection = {
+        **_inspection(),
+        "cell_type_column_present": False,
+        "timepoint_column_present": False,
+        "condition_column_present": True,
+        "age_column_present": True,
+        "batch_column_present": True,
+        "condition_summary": {"values": ["NT", "SOKM"]},
+    }
+
+    report = build_validation_profile_check(
+        inspection=inspection,
+        track_name="mouse_adipo_oskm_condition_screen",
+        track_config={
+            "condition_column": "combination_short",
+            "expected_conditions": ["NT", "SOKM"],
+            "control_condition": "NT",
+            "full_oskm_condition": "SOKM",
+            "age_column": "age",
+            "batch_column": "experiment",
+        },
+    )
+
+    assert report["status"] == "pass"
+    assert report["missing_columns"] == []
+    assert report["missing_timepoints"] == []
+    assert report["missing_conditions"] == []
+
+
+def test_build_validation_profile_check_reviews_missing_condition_values():
+    inspection = {
+        **_inspection(),
+        "condition_column_present": True,
+        "condition_summary": {"values": ["NT"]},
+    }
+
+    report = build_validation_profile_check(
+        inspection=inspection,
+        track_name="toy_condition_track",
+        track_config={
+            "condition_column": "condition",
+            "expected_conditions": ["NT", "SOKM"],
+        },
+    )
+
+    assert report["status"] == "review"
+    assert report["missing_conditions"] == ["SOKM"]
+
+
 def test_load_and_write_validation_profile_check_round_trip(tmp_path):
     track_config = tmp_path / "tracks.toml"
     track_config.write_text(

@@ -13,15 +13,18 @@ def test_resolve_dataset_profile_merges_profile_sections():
 
     merged_config, manifest = resolve_dataset_profile(
         base_config,
-        profile_name="gse176206_mouse_transient_partial",
+        profile_name="gse176206_mouse_adipo_condition_screen",
         profile_config_path="configs/reprogramming_profiles.toml",
     )
 
     assert merged_config["data"]["oskm"]["species"] == "mouse"
-    assert merged_config["reprogramming"]["dataset_profile"] == "gse176206_mouse_transient_partial"
+    assert merged_config["reprogramming"]["dataset_profile"] == (
+        "gse176206_mouse_adipo_condition_screen"
+    )
     assert "pluripotent_labels" in merged_config["reprogramming"]["references"]
     assert "pluripotency_risk" in merged_config["reprogramming"]["marker_panels"]
     assert manifest["accession"] == "GSE176206"
+    assert manifest["condition_column"] == "combination_short"
 
 
 def test_resolve_dataset_profile_returns_original_when_not_requested():

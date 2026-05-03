@@ -16,6 +16,18 @@ def test_resolve_validation_track_returns_named_track():
     assert "recommendation" in track
 
 
+def test_resolve_validation_track_supports_condition_screen_track():
+    track = resolve_validation_track(
+        "mouse_adipo_oskm_condition_screen",
+        "configs/validation_tracks.toml",
+    )
+
+    assert track["dataset_profile"] == "gse176206_mouse_adipo_condition_screen"
+    assert track["condition_column"] == "combination_short"
+    assert track["expected_conditions"] == ["NT", "SOKM"]
+    assert "expected_timepoints" not in track
+
+
 def test_build_validation_bundle_manifest_links_track_and_ablation_manifest():
     manifest = build_validation_bundle_manifest(
         track_name="human_fibroblast_oskm",

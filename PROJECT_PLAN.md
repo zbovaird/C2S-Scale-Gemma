@@ -119,19 +119,22 @@ Transform the C2S-Scale-Gemma hybrid architecture into a specialized tool for mo
 - [x] Added reviewable GEO supplementary download plans to validation data manifests without automatically downloading large files.
 - [x] Added validation dataset inspection reports for checking downloaded `.h5ad` schema and OSKM presence before validation runs.
 - [x] Added validation profile checks that compare inspection reports with configured track columns, expected timepoints, and OSKM resolution.
+- [x] Adapted the staged `GSE176206_adipo_screen.h5ad.gz` profile to the real `combination_short` condition-screen schema: `NT` is the control condition, `SOKM` is the full OSKM condition, and `age` / `experiment` provide cohort and batch metadata. This dataset should not be treated as a time-course trajectory.
 - [x] Added validation artifact review reports that turn exported bundle contents into pass/review/fail signals before scientific interpretation.
 
 ## Updated Remaining Build
 
-1. Run and harden the dataset-backed validation layer on real fibroblast-to-iPSC and transient-partial-OSKM studies, including threshold/profile calibration and artifact QA.
+1. Run and harden the dataset-backed validation layer on real fibroblast-to-iPSC time courses and condition-screen studies, including threshold/profile calibration and artifact QA.
 2. Validate the curvature-aware/projective alignment mode on real OKSM datasets using paired ablations, shared trajectory projections, and track-specific recommendation evidence.
-3. Extend the current shared-PCA trajectory views toward hyperbolic/manifold-native views once real validation outputs show stable biological structure.
+3. Extend the current shared-PCA trajectory views toward hyperbolic/manifold-native views once real validation outputs show stable biological structure and the local `torch` / `uhg` runtime is reliable.
 4. Tighten documentation around config profiles, benchmark datasets, artifact interpretation limits, and what should/should not be inferred from projection views.
-5. Refactor the HGNN stack toward more manifold-native operations after the validation loop is producing stable evidence and the target manifold choice is clear.
+5. Gate the HGNN manifold-native refactor against runtime UHG capability checks. The current software path centralizes `projective_uhg`, records backend/fallback metadata, and keeps explicit tangent-space adapters until importable UHG-native layer ops can be verified under a working PyTorch runtime.
+6. Resolve the `GSE242423` acquisition blocker by finding a valid processed AnnData source or adding a manual conversion path; the inferred `.h5ad` GEO supplementary URL currently returns 404.
+7. Re-run full model validation only in an environment where `torch`, `scanpy` / `anndata`, and the required checkpoints load reliably.
 
 ## Real Dataset Candidates
 
-- **First downloadable validation target:** `GSE176206_adipo_screen.h5ad.gz` from `GSE176206` (`Mouse transient partial reprogramming validation`). GEO lists this as a processed H5AD artifact for the transient OSKM/partial-reprogramming screen, and the current config expects it at `data/raw/GSE176206_adipo_screen.h5ad.gz`.
+- **First staged validation target:** `GSE176206_adipo_screen.h5ad.gz` from `GSE176206` (`Mouse adipogenic OSKM condition-screen validation`). The local dataset has 9,880 cells by 28,701 genes with `combination_short`, `age`, and `experiment` metadata; the validation profile now checks `NT` vs `SOKM` as condition groups instead of expecting missing `cell_type` / `phase` time-course columns.
 - **Configured human validation target:** `GSE242423` (`Human fibroblast OSKM reprogramming validation`). Treat this as a strong target, but confirm processed count/AnnData availability from the associated resource before relying on it, because the GEO record notes that raw data are not provided due to patient privacy.
 - **Curated candidate registry:** broader public datasets now live in `configs/validation_tracks.toml` under `validation_dataset_candidates`; `scripts/build_validation_data_manifest.py` carries them into review-only manifest rows without downloading data.
 - **Primary OSKM trajectory benchmark:** Waddington-OT MEF to iPSC (`GSE106664`, Broad SCP30; Schiebinger et al. 2019) provides a dense mouse OSKM 10x time course with stochastic, elite, and dead-end lineages for trajectory-model validation.

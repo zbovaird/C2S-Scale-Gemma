@@ -24,11 +24,22 @@ def build_validation_profile_check(
     missing_timepoints = [
         value for value in expected_timepoints if value not in observed_timepoints
     ]
+    expected_conditions = [str(value) for value in track_config.get("expected_conditions", [])]
+    observed_conditions = {
+        str(value)
+        for value in (inspection.get("condition_summary") or {}).get("values", [])
+    }
+    missing_conditions = [
+        value for value in expected_conditions if value not in observed_conditions
+    ]
     missing_columns = [
         column
         for column, present in (
             (track_config.get("cell_type_column"), inspection.get("cell_type_column_present")),
             (track_config.get("timepoint_column"), inspection.get("timepoint_column_present")),
+            (track_config.get("condition_column"), inspection.get("condition_column_present")),
+            (track_config.get("age_column"), inspection.get("age_column_present")),
+            (track_config.get("batch_column"), inspection.get("batch_column_present")),
         )
         if column and not present
     ]
@@ -37,7 +48,7 @@ def build_validation_profile_check(
 
     if missing_columns:
         status = "fail"
-    elif missing_timepoints or missing_oskm:
+    elif missing_timepoints or missing_conditions or missing_oskm:
         status = "review"
     else:
         status = "pass"
@@ -51,6 +62,11 @@ def build_validation_profile_check(
         "expected_timepoints": expected_timepoints,
         "observed_timepoints": sorted(observed_timepoints),
         "missing_timepoints": missing_timepoints,
+        "expected_conditions": expected_conditions,
+        "observed_conditions": sorted(observed_conditions),
+        "missing_conditions": missing_conditions,
+        "control_condition": track_config.get("control_condition"),
+        "full_oskm_condition": track_config.get("full_oskm_condition"),
         "resolved_oskm_genes": dict(inspection.get("resolved_oskm_genes", {})),
         "missing_oskm_genes": missing_oskm,
         "n_resolved_oskm_genes": n_resolved_oskm,

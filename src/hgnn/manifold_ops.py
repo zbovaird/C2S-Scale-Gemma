@@ -94,8 +94,17 @@ class ProjectiveManifoldBackend:
         )
         for i in range(left_embeddings.size(0)):
             for j in range(right_embeddings.size(0)):
-                distances[i, j] = self.uhg.distance(
-                    left_embeddings[i],
-                    right_embeddings[j],
-                )
+                try:
+                    distances[i, j] = self.uhg.distance(
+                        left_embeddings[i],
+                        right_embeddings[j],
+                    )
+                except ValueError:
+                    if self.require_backend:
+                        raise
+                    return (
+                        torch.cdist(left_embeddings, right_embeddings, p=2),
+                        "euclidean_cdist_fallback",
+                        True,
+                    )
         return distances, "projective_uhg_distance", False

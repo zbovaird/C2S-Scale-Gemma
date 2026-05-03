@@ -67,6 +67,45 @@ def test_build_validation_input_preflight_fails_missing_required_inputs(tmp_path
     assert "baseline_data_path" in failed_ids
 
 
+def test_build_validation_input_preflight_accepts_condition_screen_track(tmp_path):
+    paths = {
+        name: tmp_path / name
+        for name in (
+            "baseline.h5ad",
+            "perturbed.h5ad",
+            "euclidean.toml",
+            "euclidean.pt",
+            "projective.toml",
+            "projective.pt",
+            "profiles.toml",
+        )
+    }
+    for path in paths.values():
+        path.write_text("placeholder", encoding="utf-8")
+
+    report = build_validation_input_preflight(
+        track_name="mouse_adipo_oskm_condition_screen",
+        track_config={
+            "dataset_profile": "gse176206_mouse_adipo_condition_screen",
+            "condition_column": "combination_short",
+            "expected_conditions": ["NT", "SOKM"],
+            "primary_metrics": ["safe_fraction"],
+        },
+        baseline_data_path=paths["baseline.h5ad"],
+        perturbed_data_path=paths["perturbed.h5ad"],
+        euclidean_config=paths["euclidean.toml"],
+        euclidean_checkpoint=paths["euclidean.pt"],
+        projective_config=paths["projective.toml"],
+        projective_checkpoint=paths["projective.pt"],
+        dataset_profile_config=paths["profiles.toml"],
+    )
+
+    failed_ids = {check["id"] for check in report["checks"] if not check["passed"]}
+    assert report["status"] == "pass"
+    assert "track_field:timepoint_column" not in failed_ids
+    assert "track_field:cell_type_column" not in failed_ids
+
+
 def test_build_validation_artifact_qa_validates_manifest_outputs(tmp_path):
     summary_json = tmp_path / "validation_benchmark_summary.json"
     explorer_payload = tmp_path / "validation_explorer_payload.json"
